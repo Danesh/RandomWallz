@@ -30,7 +30,7 @@ public class RandomWallpaper extends IntentService {
     private WallpaperManager mWallpaperManager;
     private int mWallpaperDesiredWidth;
     private int mWallpaperDesiredHeight;
-    private ImageSizeInfo mImageInfo;
+    private ImageInfo mImageInfo;
 
     /**
      * Prevent simultaneous requests
@@ -43,16 +43,15 @@ public class RandomWallpaper extends IntentService {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        if (HAS_JOBS) {
-            return 0;
+        if (!HAS_JOBS) {
+            TimerUpdate.cancelAllAlarms(this);
+            mPrefHelper = new PreferenceHelper(this);
+            mWallpaperManager = WallpaperManager.getInstance(this);
+            mWallpaperDesiredWidth = mWallpaperManager.getDesiredMinimumWidth();
+            mWallpaperDesiredHeight = mWallpaperManager.getDesiredMinimumHeight();
+            HAS_JOBS = true;
+            mImageInfo = new ImageInfo();
         }
-        TimerUpdate.cancelAllAlarms(this);
-        mPrefHelper = new PreferenceHelper(this);
-        mWallpaperManager = WallpaperManager.getInstance(this);
-        mWallpaperDesiredWidth = mWallpaperManager.getDesiredMinimumWidth();
-        mWallpaperDesiredHeight = mWallpaperManager.getDesiredMinimumHeight();
-        HAS_JOBS = true;
-        mImageInfo = new ImageSizeInfo();
         return super.onStartCommand(intent, flags, startId);
     }
 
@@ -82,10 +81,10 @@ public class RandomWallpaper extends IntentService {
             origBitmap = BitmapFactory.decodeStream(ins, null ,options);
 
             if (origBitmap == null) {
+                Util.showToast(this, "Unable to retrieve wallpaper");
                 if (ins != null) {
                     ins.close();
                 }
-                options.inBitmap.recycle();
                 return;
             }
 
@@ -131,9 +130,6 @@ public class RandomWallpaper extends IntentService {
         } catch (OutOfMemoryError e) {
             e.printStackTrace();
         } finally {
-            if (options.inBitmap != null) {
-                options.inBitmap.recycle();
-            }
             if (origBitmap != null) origBitmap.recycle();
             if (scaledBitmap != null) scaledBitmap.recycle();
         }
@@ -237,7 +233,7 @@ public class RandomWallpaper extends IntentService {
         }
     }
 
-    private final static class ImageSizeInfo {
+    private final static class ImageInfo {
         String id;
         int width;
         int height;
