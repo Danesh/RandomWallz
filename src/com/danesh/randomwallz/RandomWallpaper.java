@@ -163,12 +163,15 @@ public class RandomWallpaper extends IntentService {
             JSONArray jsonResponse = null;
             int index = 0;
             try {
-
                 // Check if cached urls exist
                 if (Util.getCacheFile(this).exists() && mPrefHelper.getFailedAttempts() < 2) {
                     storedCache = Util.readCacheResults(this);
-                    index = storedCache.getInt("index");
-                    jsonResponse = storedCache.getJSONArray("results");
+                    if (storedCache.has("index")) {
+                        index = storedCache.getInt("index");
+                    }
+                    if (storedCache.has("results")) {
+                        jsonResponse = storedCache.getJSONArray("results");
+                    }
                     Util.updateWidgetProgress(this, 5);
                 }
 
