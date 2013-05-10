@@ -18,7 +18,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences.Editor;
 import android.graphics.Bitmap;
-import android.graphics.Bitmap.Config;
 import android.graphics.BitmapFactory;
 
 import com.danesh.randomwallz.WallBase.ResFilter;
@@ -29,8 +28,6 @@ public class RandomWallpaper extends IntentService {
     private static final String TEMP_FILE_NAME = "wallpaper";
     private PreferenceHelper mPrefHelper;
     private WallpaperManager mWallpaperManager;
-    private int mWallpaperDesiredWidth;
-    private int mWallpaperDesiredHeight;
     private ImageInfo mImageInfo;
 
     /**
@@ -48,8 +45,6 @@ public class RandomWallpaper extends IntentService {
             TimerUpdate.cancelAllAlarms(this);
             mPrefHelper = new PreferenceHelper(this);
             mWallpaperManager = WallpaperManager.getInstance(this);
-            mWallpaperDesiredWidth = mWallpaperManager.getDesiredMinimumWidth();
-            mWallpaperDesiredHeight = mWallpaperManager.getDesiredMinimumHeight();
             HAS_JOBS = true;
             mImageInfo = new ImageInfo();
             return super.onStartCommand(intent, flags, startId);
@@ -64,68 +59,59 @@ public class RandomWallpaper extends IntentService {
      * @throws IOException
      */
     private void setUrlWallpaper(URL url) throws IOException {
-        BufferedInputStream ins;
-        Bitmap origBitmap = null, scaledBitmap = null;
+        BufferedInputStream urlInputStream = null;
+        FileInputStream tmpFileInputStream = null;
+        FileOutputStream tmpFileOutputStream = null;
+        Bitmap origBitmap = null;
         BitmapFactory.Options options = new BitmapFactory.Options();
         try {
 
-            options.inPreferredConfig = Config.RGB_565;
             options.inSampleSize = calculateInSampleSize();
-            options.inPurgeable = true;
-            options.inTempStorage = new byte[3145728];
-
-            // Calculate new height according to ratio
-            int newImageHeight = (int) (((double) mImageInfo.height / mImageInfo.width) * mWallpaperDesiredWidth);
+            options.inTempStorage = new byte[32 * 1024];
 
             // Get the bitmap from URL
-            ins = new BufferedInputStream(url.openStream(), 3145728);
+            urlInputStream = new BufferedInputStream(url.openStream());
 
             Util.updateWidgetProgress(this, 40);
-            origBitmap = BitmapFactory.decodeStream(ins, null ,options);
+
+            origBitmap = BitmapFactory.decodeStream(urlInputStream, null ,options);
+
+            Util.updateWidgetProgress(this, 62);
 
             if (origBitmap == null) {
                 Util.showToast(this, "Unable to retrieve wallpaper");
-                if (ins != null) {
-                    ins.close();
-                }
-                return;
+            } else {
+                // Create temporary file
+                tmpFileOutputStream = openFileOutput(TEMP_FILE_NAME, Context.MODE_PRIVATE);
+
+                Util.updateWidgetProgress(this, 70);
+
+                // Save scaled bitmap to temporary file
+                origBitmap.compress(Bitmap.CompressFormat.JPEG, 100, tmpFileOutputStream);
+
+                Util.updateWidgetProgress(this, 85);
+
+                // Read temporary file
+                tmpFileInputStream = openFileInput(TEMP_FILE_NAME);
+
+                Util.updateWidgetProgress(this, 92);
+
+                // Set wallpaper to temporary file
+                mWallpaperManager.setStream(tmpFileInputStream);
+
+                // Delete temporary file
+                new File(getFilesDir(), TEMP_FILE_NAME).delete();
+
+                Editor edit = mPrefHelper.getEditor();
+
+                // Save wallpaper id. Used for filename when saving wallpaper
+                edit.putString(PreferenceHelper.LAST_ID, mImageInfo.id);
+
+                // Save wallpaper url. Used for debugging purposes
+                edit.putString(Configuration.LAST_URL, url.toString());
+
+                edit.apply();
             }
-
-            // Create temporary file
-            FileOutputStream out = openFileOutput(TEMP_FILE_NAME, Context.MODE_PRIVATE);
-
-            Util.updateWidgetProgress(this, 70);
-            // Resize bitmap according to WallpaperManager desired dimensions
-            scaledBitmap = Bitmap.createScaledBitmap(origBitmap, mWallpaperDesiredWidth, newImageHeight, true);
-
-            // Save scaled bitmap to temporary file
-            scaledBitmap.compress(Bitmap.CompressFormat.JPEG, 100, out);
-
-            Util.updateWidgetProgress(this, 85);
-
-            out.close();
-
-            // Read temporary file
-            FileInputStream in = openFileInput(TEMP_FILE_NAME);
-
-            Util.updateWidgetProgress(this, 92);
-            // Set wallpaper to temporary file
-            mWallpaperManager.setStream(in);
-
-            in.close();
-
-            // Delete temporary file
-            new File(getFilesDir(), "wallpaper").delete();
-
-            Editor edit = mPrefHelper.getEditor();
-
-            // Save wallpaper id. Used for filename when saving wallpaper
-            edit.putString(PreferenceHelper.LAST_ID, mImageInfo.id);
-
-            // Save wallpaper url. Used for debugging purposes
-            edit.putString(Configuration.LAST_URL, url.toString());
-
-            edit.apply();
         } catch (IOException e) {
             // Error occurred while decoding bitmap
             e.printStackTrace();
@@ -133,8 +119,18 @@ public class RandomWallpaper extends IntentService {
         } catch (OutOfMemoryError e) {
             e.printStackTrace();
         } finally {
-            if (origBitmap != null) origBitmap.recycle();
-            if (scaledBitmap != null) scaledBitmap.recycle();
+            if (origBitmap != null) {
+                origBitmap.recycle();
+            }
+            if (urlInputStream != null) {
+                urlInputStream.close();
+            }
+            if (tmpFileOutputStream != null) {
+                tmpFileOutputStream.close();
+            }
+            if (tmpFileInputStream != null) {
+                tmpFileInputStream.close();
+            }
         }
     }
 
@@ -144,18 +140,20 @@ public class RandomWallpaper extends IntentService {
      * @return an integer for the inSampleSize property of BitmapOptions
      */
     public int calculateInSampleSize() {
-        int inSampleSize = 1;
-        if (mImageInfo.height > mWallpaperDesiredHeight || mImageInfo.width > mWallpaperDesiredWidth) {
-            // Calculate ratios of height and width to requested height and width
-            final int heightRatio = Math.round((float) mImageInfo.height / (float) mWallpaperDesiredHeight);
-            final int widthRatio = Math.round((float) mImageInfo.width / (float) mWallpaperDesiredWidth);
-
-            // Choose the smallest ratio as inSampleSize value, this will guarantee
-            // a final image with both dimensions larger than or equal to the
-            // requested height and width.
-            inSampleSize = heightRatio < widthRatio ? heightRatio : widthRatio;
+        int maxWidth = mWallpaperManager.getDesiredMinimumWidth();
+        int maxHeight = mWallpaperManager.getDesiredMinimumHeight();
+        // Give maxWidth and maxHeight some leeway
+        maxWidth *= 1.25;
+        maxHeight *= 1.25;
+        int bmWidth = mImageInfo.width;
+        int bmHeight = mImageInfo.height;
+        int scale = 1;
+        while (bmWidth > maxWidth || bmHeight > maxHeight) {
+            scale <<= 1;
+            bmWidth >>= 1;
+            bmHeight >>= 1;
         }
-        return inSampleSize;
+        return scale;
     }
 
     @Override
@@ -224,7 +222,7 @@ public class RandomWallpaper extends IntentService {
                     TimerUpdate.setTimer(this);
                 } else {
                     Util.showToast(this, "Unable to retrieve wallpaper");
-                    
+
                 }
                 Util.updateWidgetProgress(this, 100);
             }

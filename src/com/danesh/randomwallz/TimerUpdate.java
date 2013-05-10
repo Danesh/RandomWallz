@@ -13,6 +13,10 @@ public class TimerUpdate extends BroadcastReceiver {
         setTimer(context);
     }
 
+    /**
+     * Sets the timer according to timerinterval configured by user
+     * @param ctx
+     */
     static void setTimer(Context ctx) {
         String storedTimer = new PreferenceHelper(ctx).getTimerInterval();
         try {
@@ -30,11 +34,20 @@ public class TimerUpdate extends BroadcastReceiver {
         }
     }
 
+    /**
+     * Returns the pending intent used to refresh wallpaper on intervals
+     * @param ctx
+     * @return
+     */
     private static PendingIntent getPendingIntent(Context ctx) {
         Intent intent = new Intent(ctx, RandomWallpaper.class);
         return PendingIntent.getService(ctx, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
     }
 
+    /**
+     * Cancel all pending alarms
+     * @param ctx
+     */
     static void cancelAllAlarms(Context ctx) {
         AlarmManager alarmManager = (AlarmManager) ctx.getSystemService(Context.ALARM_SERVICE);
         alarmManager.cancel(getPendingIntent(ctx));
