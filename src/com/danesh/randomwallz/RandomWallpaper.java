@@ -80,6 +80,9 @@ public class RandomWallpaper extends IntentService {
                 // Save wallpaper url. Used for debugging purposes
                 edit.putString(Configuration.LAST_URL, url.toString());
 
+                // Set flag to communicate that wallpaper change was by this app
+                edit.putBoolean(PreferenceHelper.WALLPAPER_CHANGED, true);
+
                 edit.apply();
             }
         } catch (IOException e) {
