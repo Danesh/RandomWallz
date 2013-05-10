@@ -1,35 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="110dp"
-    android:layout_height="60dp"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
     android:background="@drawable/widget_background"
     android:orientation="vertical"
     android:padding="2dp" >
 
-    <LinearLayout
+    <ProgressBar
+        android:id="@+id/progress"
+        style="@android:style/Widget.Holo.Light.ProgressBar.Horizontal"
         android:layout_width="match_parent"
-        android:layout_height="10dp" >
-
-        <ProgressBar
-            android:id="@+id/progress"
-            style="@android:style/Widget.Holo.Light.ProgressBar.Horizontal"
-            android:layout_width="match_parent"
-            android:layout_height="10dp"
-            android:layout_marginLeft="2dp"
-            android:layout_marginRight="2dp"
-            android:max="100"
-            android:padding="0dp"
-            android:progress="100" />
-    </LinearLayout>
+        android:layout_height="0dp"
+        android:layout_marginLeft="2dp"
+        android:layout_marginRight="2dp"
+        android:layout_weight="0.1"
+        android:max="100"
+        android:padding="0dp"
+        android:progress="100" />
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="50dp" >
+        android:layout_height="0dp"
+        android:layout_weight="0.9" >
 
         <ImageButton
             android:id="@+id/refresh"
             android:layout_width="0dp"
-            android:layout_height="50dp"
+            android:layout_height="match_parent"
             android:layout_marginRight="1dp"
             android:layout_weight="1"
             android:background="@drawable/appwidget_dark_bg_clickable"
@@ -39,7 +36,7 @@
         <ImageButton
             android:id="@+id/config"
             android:layout_width="0dp"
-            android:layout_height="50dp"
+            android:layout_height="match_parent"
             android:layout_weight="1"
             android:background="@drawable/appwidget_dark_bg_clickable"
             android:contentDescription="@string/configuration_dialog_title"
