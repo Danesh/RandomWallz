@@ -99,6 +99,9 @@ public class Configuration extends Activity {
         if (shouldClearCache()) {
             Util.getCacheFile(this).delete();
         }
+        if (!mTimerValues[mTimerInterval.getSelectedItemPosition()].equals(mPrefHelper.getTimerInterval())) {
+            TimerUpdate.setTimer(this);
+        }
         Editor editor = mPrefHelper.getEditor();
         editor.putString(PreferenceHelper.SEARCH_TERM, mSearchTerm.getText().toString());
         editor.putBoolean(PreferenceHelper.SAFE_MODE, mSafeMode.isChecked());

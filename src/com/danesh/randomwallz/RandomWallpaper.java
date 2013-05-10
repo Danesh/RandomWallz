@@ -22,6 +22,7 @@ import android.graphics.Bitmap.Config;
 import android.graphics.BitmapFactory;
 
 import com.danesh.randomwallz.WallBase.ResFilter;
+import com.danesh.randomwallz.WallBase.WallTypes;
 
 public class RandomWallpaper extends IntentService {
 
@@ -51,8 +52,10 @@ public class RandomWallpaper extends IntentService {
             mWallpaperDesiredHeight = mWallpaperManager.getDesiredMinimumHeight();
             HAS_JOBS = true;
             mImageInfo = new ImageInfo();
+            return super.onStartCommand(intent, flags, startId);
+        } else {
+            return 0;
         }
-        return super.onStartCommand(intent, flags, startId);
     }
 
     /**
@@ -63,12 +66,12 @@ public class RandomWallpaper extends IntentService {
     private void setUrlWallpaper(URL url) throws IOException {
         BufferedInputStream ins;
         Bitmap origBitmap = null, scaledBitmap = null;
-        final BitmapFactory.Options options = new BitmapFactory.Options();
+        BitmapFactory.Options options = new BitmapFactory.Options();
         try {
 
             options.inPreferredConfig = Config.RGB_565;
             options.inSampleSize = calculateInSampleSize();
-            options.inDither = true;
+            options.inPurgeable = true;
             options.inTempStorage = new byte[3145728];
 
             // Calculate new height according to ratio
@@ -177,6 +180,7 @@ public class RandomWallpaper extends IntentService {
                     wBase.setSafeMode(mPrefHelper.getSafeMode());
                     wBase.setResolution(mWallpaperManager.getDesiredMinimumWidth(), mWallpaperManager.getDesiredMinimumHeight());
                     wBase.setResolutionFilter(ResFilter.GREATER_OR_EQUAL);
+                    wBase.setWallpaperType(WallTypes.ANIME, WallTypes.GENERAL);
                     wBase.setSearchTerm(mPrefHelper.getSearchTerm());
                     jsonResponse = wBase.query();
                     if (jsonResponse != null) {
