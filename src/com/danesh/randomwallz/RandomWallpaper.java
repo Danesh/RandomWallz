@@ -65,7 +65,6 @@ public class RandomWallpaper extends IntentService {
         Bitmap origBitmap = null;
         BitmapFactory.Options options = new BitmapFactory.Options();
         try {
-
             options.inSampleSize = calculateInSampleSize();
             options.inTempStorage = new byte[32 * 1024];
 
@@ -180,7 +179,8 @@ public class RandomWallpaper extends IntentService {
                 if (jsonResponse == null || index == jsonResponse.length()) {
                     WallBase wBase = new WallBase();
                     wBase.setSafeMode(mPrefHelper.getSafeMode());
-                    wBase.setResolution(mWallpaperManager.getDesiredMinimumWidth(), mWallpaperManager.getDesiredMinimumHeight());
+                    wBase.setResolution(mWallpaperManager.getDesiredMinimumWidth(),
+                            mWallpaperManager.getDesiredMinimumHeight());
                     wBase.setResolutionFilter(ResFilter.GREATER_OR_EQUAL);
                     wBase.setNumberOfResults(32);
                     wBase.setWallpaperType(WallTypes.ANIME, WallTypes.GENERAL);
@@ -234,10 +234,10 @@ public class RandomWallpaper extends IntentService {
         } else {
             Util.showToast(this, "Unable to retrieve wallpaper");
         }
-        HAS_JOBS = false;
         if (intent.hasExtra(WidgetProvider.FORCED_EXTRA)) {
             TimerUpdate.setTimer(this);
         }
+        HAS_JOBS = false;
     }
 
     private final static class ImageInfo {
