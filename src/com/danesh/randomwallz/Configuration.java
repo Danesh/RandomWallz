@@ -9,6 +9,8 @@ import java.util.Arrays;
 import java.util.Random;
 
 import android.app.Activity;
+import android.app.Dialog;
+import android.app.ProgressDialog;
 import android.app.WallpaperManager;
 import android.content.Context;
 import android.content.SharedPreferences.Editor;
@@ -31,8 +33,9 @@ public class Configuration extends Activity {
     public static final String LAST_URL = "last_url";
 
     private static final int SAVE_WALLPAPER = 0;
-    private static final int SAVE_WALLPAPER_SUCCESS_TOAST = 1;
-    private static final int SAVE_WALLPAPER_FAILURE_TOAST = 2;
+    private static final int SAVE_WALLPAPER_SUCCESS = 1;
+    private static final int SAVE_WALLPAPER_FAILURE = 2;
+    private static final int SAVE_WALLPAPER_PROCESSED = 3;
 
     private PreferenceHelper mPrefHelper;
     private SaveWallpaperHandler mSaveWallpaperHandler;
@@ -40,6 +43,7 @@ public class Configuration extends Activity {
     private ToggleButton mSafeMode;
     private Spinner mTimerInterval;
     private String[] mTimerValues;
+    private Dialog mProgressDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -110,12 +114,12 @@ public class Configuration extends Activity {
         cancel(null);
     }
 
-    private static class SaveWallpaperHandler extends Handler {
+    private static final class SaveWallpaperHandler extends Handler {
 
-        private final WeakReference<Context> mContext;
+        private final WeakReference<Configuration> mConfiguration;
 
-        SaveWallpaperHandler(Context context) {
-            mContext = new WeakReference<Context>(context);
+        SaveWallpaperHandler(Configuration configActivity) {
+            mConfiguration = new WeakReference<Configuration>(configActivity);
         }
 
         @Override
@@ -127,26 +131,27 @@ public class Configuration extends Activity {
                     @Override
                     public void run() {
                         boolean wasSuccessful = false;
-                        if (mContext.get() != null && Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
+                        if (mConfiguration.get() != null && Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
+                            Context context = mConfiguration.get().getBaseContext();
                             String folder = Environment.getExternalStorageDirectory() + "/" + FOLDER_NAME;
                             File rootFolder = new File(folder);
                             if (rootFolder.isDirectory() || rootFolder.mkdir()) {
-                                String lastId = new PreferenceHelper(mContext.get()).getLastWallpaperId();
+                                String lastId = new PreferenceHelper(context).getLastWallpaperId();
                                 String newFileName = String.format(FILE_BASE_NAME, lastId.isEmpty() ? new Random().nextInt(Integer.MAX_VALUE) : lastId);
                                 while (lastId.isEmpty() && new File(newFileName).exists()) {
                                     newFileName = String.format(FILE_BASE_NAME, lastId.isEmpty() ? new Random().nextInt(Integer.MAX_VALUE) : lastId);
                                 }
                                 String fullPath = rootFolder + "/" + newFileName;
-                                PreferenceHelper prefHelper = new PreferenceHelper(mContext.get());
+                                PreferenceHelper prefHelper = new PreferenceHelper(context);
                                 if (prefHelper.getWallpaperChanged()) {
                                     try {
-                                        Util.copyFile(new File(Util.getWallpaperFile(mContext.get())), new File(fullPath));
+                                        Util.copyFile(new File(Util.getWallpaperFile(context)), new File(fullPath));
                                         wasSuccessful = true;
                                     } catch (IOException e) {
                                         e.printStackTrace();
                                     }
                                 } else {
-                                    BitmapDrawable curWallpaper = (BitmapDrawable) WallpaperManager.getInstance(mContext.get()).getDrawable();
+                                    BitmapDrawable curWallpaper = (BitmapDrawable) WallpaperManager.getInstance(context).getDrawable();
                                     FileOutputStream saveImg = null;
                                     try {
                                         saveImg = new FileOutputStream(new File(fullPath));
@@ -164,18 +169,23 @@ public class Configuration extends Activity {
                                 }
                             }
                         }
-                        sendEmptyMessage(wasSuccessful ? SAVE_WALLPAPER_SUCCESS_TOAST : SAVE_WALLPAPER_FAILURE_TOAST);
+                        Message msg = Message.obtain();
+                        msg.arg1 = wasSuccessful ? SAVE_WALLPAPER_SUCCESS : SAVE_WALLPAPER_FAILURE;
+                        msg.what = SAVE_WALLPAPER_PROCESSED;
+                        sendMessage(msg);
                     }
                 }).start();
                 break;
-            case SAVE_WALLPAPER_SUCCESS_TOAST:
-                if (mContext.get() != null) {
-                    Toast.makeText(mContext.get(), R.string.image_saved_toast, Toast.LENGTH_SHORT).show();
-                }
-                break;
-            case SAVE_WALLPAPER_FAILURE_TOAST:
-                if (mContext.get() != null) {
-                    Toast.makeText(mContext.get(), R.string.image_not_saved_toast, Toast.LENGTH_SHORT).show();
+            case SAVE_WALLPAPER_PROCESSED:
+                if (mConfiguration.get() != null) {
+                    Context context = mConfiguration.get().getBaseContext();
+                    if (msg.arg1 == SAVE_WALLPAPER_SUCCESS) {
+                        Toast.makeText(context, R.string.image_saved_toast, Toast.LENGTH_SHORT).show();
+                    } else {
+                        Toast.makeText(context, R.string.image_not_saved_toast, Toast.LENGTH_SHORT).show();
+                    }
+                    mConfiguration.get().mProgressDialog.dismiss();
+                    mConfiguration.get().mProgressDialog = null;
                 }
                 break;
             }
@@ -187,7 +197,8 @@ public class Configuration extends Activity {
      * @param v
      */
     public void saveWallpaper(View v) {
-        if (!mSaveWallpaperHandler.hasMessages(SAVE_WALLPAPER)) {
+        if (!mSaveWallpaperHandler.hasMessages(SAVE_WALLPAPER) && mProgressDialog == null) {
+            mProgressDialog = ProgressDialog.show(this, "Loading", "Saving wallpaper", true, false);
             mSaveWallpaperHandler.sendEmptyMessage(SAVE_WALLPAPER);
         }
     }
