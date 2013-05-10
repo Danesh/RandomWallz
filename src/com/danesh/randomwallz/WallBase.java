@@ -12,7 +12,6 @@ import java.net.URLConnection;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Scanner;
 import java.util.concurrent.ExecutorService;
@@ -87,7 +86,7 @@ public final class WallBase {
         }
     }
 
-    public static final List<Integer> NUM_RESULTS_SUPPORTED = Collections.unmodifiableList(Arrays.asList(20,32,40,60));
+    private static final List<Integer> NUM_RESULTS_SUPPORTED = Arrays.asList(20,32,40,60);
     private static final String SITE_BASE = "http://wallbase.cc";
     private static final String SITE_SEARCH = SITE_BASE + "/search";
     private static final String SITE_WALLPAPER = SITE_BASE + "/wallpaper/";
@@ -147,8 +146,8 @@ public final class WallBase {
     }
 
     /**
-     * Must be an element from {@link NUM_RESULTS_SUPPORTED}
-     * @param number
+     * Sets number of results to store
+     * @param number must be one of (20,32,40,60)
      * @throws IllegalArgumentException
      */
     public void setNumberOfResults(int number) throws IllegalArgumentException {

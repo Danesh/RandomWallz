@@ -76,7 +76,7 @@ public class RandomWallpaper extends IntentService {
 
             origBitmap = BitmapFactory.decodeStream(urlInputStream, null ,options);
 
-            Util.updateWidgetProgress(this, 62);
+            Util.updateWidgetProgress(this, 60);
 
             if (origBitmap == null) {
                 Util.showToast(this, "Unable to retrieve wallpaper");
@@ -94,7 +94,7 @@ public class RandomWallpaper extends IntentService {
                 // Read temporary file
                 tmpFileInputStream = openFileInput(TEMP_FILE_NAME);
 
-                Util.updateWidgetProgress(this, 92);
+                Util.updateWidgetProgress(this, 90);
 
                 // Set wallpaper to temporary file
                 mWallpaperManager.setStream(tmpFileInputStream);
@@ -162,6 +162,7 @@ public class RandomWallpaper extends IntentService {
             JSONObject storedCache = null;
             JSONArray jsonResponse = null;
             int index = 0;
+            Util.updateWidgetProgress(this, 5);
             try {
                 // Check if cached urls exist
                 if (Util.getCacheFile(this).exists() && mPrefHelper.getFailedAttempts() < 2) {
@@ -172,7 +173,7 @@ public class RandomWallpaper extends IntentService {
                     if (storedCache.has("results")) {
                         jsonResponse = storedCache.getJSONArray("results");
                     }
-                    Util.updateWidgetProgress(this, 5);
+                    Util.updateWidgetProgress(this, 15);
                 }
 
                 // If no cache was found or if all entries are used, do a new query
@@ -181,6 +182,7 @@ public class RandomWallpaper extends IntentService {
                     wBase.setSafeMode(mPrefHelper.getSafeMode());
                     wBase.setResolution(mWallpaperManager.getDesiredMinimumWidth(), mWallpaperManager.getDesiredMinimumHeight());
                     wBase.setResolutionFilter(ResFilter.GREATER_OR_EQUAL);
+                    wBase.setNumberOfResults(32);
                     wBase.setWallpaperType(WallTypes.ANIME, WallTypes.GENERAL);
                     wBase.setSearchTerm(mPrefHelper.getSearchTerm());
                     jsonResponse = wBase.query();
@@ -191,7 +193,7 @@ public class RandomWallpaper extends IntentService {
                         mPrefHelper.resetFailedAttempts();
                         index = 0;
                     }
-                    Util.updateWidgetProgress(this, 5);
+                    Util.updateWidgetProgress(this, 15);
                 }
 
                 if (jsonResponse != null) {
@@ -202,7 +204,7 @@ public class RandomWallpaper extends IntentService {
                     mImageInfo.height = imageAttrs.getInt("wall_h");
                     mImageInfo.width = imageAttrs.getInt("wall_w");
 
-                    Util.updateWidgetProgress(this, 15);
+                    Util.updateWidgetProgress(this, 20);
 
                     try {
                         setUrlWallpaper(new URL(selectedImage.getString("url")));
