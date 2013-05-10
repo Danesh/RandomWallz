@@ -183,7 +183,7 @@ public class RandomWallpaper extends IntentService {
                             mWallpaperManager.getDesiredMinimumHeight());
                     wBase.setResolutionFilter(ResFilter.GREATER_OR_EQUAL);
                     wBase.setNumberOfResults(32);
-                    wBase.setWallpaperType(WallTypes.ANIME, WallTypes.GENERAL);
+                    wBase.setWallpaperType(WallTypes.GENERAL);
                     wBase.setSearchTerm(mPrefHelper.getSearchTerm());
                     jsonResponse = wBase.query();
                     if (jsonResponse != null) {
