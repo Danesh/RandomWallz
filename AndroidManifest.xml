@@ -12,7 +12,7 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <uses-sdk
-        android:minSdkVersion="11"
+        android:minSdkVersion="10"
         android:targetSdkVersion="17" />
 
     <application
@@ -32,11 +32,10 @@
             android:excludeFromRecents="true"
             android:exported="false"
             android:noHistory="true"
-            android:theme="@android:style/Theme.Holo.Dialog" />
+            android:theme="@style/ConfigurationTheme" />
 
         <receiver
             android:name="WidgetProvider"
-            android:exported="false"
             android:label="@string/app_name" >
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />

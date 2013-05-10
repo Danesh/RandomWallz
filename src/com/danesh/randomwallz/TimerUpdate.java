@@ -21,13 +21,12 @@ public class TimerUpdate extends BroadcastReceiver {
         String storedTimer = new PreferenceHelper(ctx).getTimerInterval();
         try {
             int time = Integer.parseInt(storedTimer) * 1000;
+            cancelAllAlarms(ctx);
             if (time != 0) {
                 PendingIntent pIntent = getPendingIntent(ctx);
                 AlarmManager alarmManager = (AlarmManager) ctx.getSystemService(Context.ALARM_SERVICE);
                 alarmManager.cancel(pIntent);
                 alarmManager.setRepeating(AlarmManager.RTC, System.currentTimeMillis() + time, time, pIntent);
-            } else {
-                cancelAllAlarms(ctx);
             }
         } catch (NumberFormatException e) {
             e.printStackTrace();

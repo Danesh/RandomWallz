@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="ConfigurationTheme" parent="@android:style/Theme.Dialog"></style>
+
+    <style name="ProgressbarTheme" parent="@android:style/Widget.ProgressBar.Horizontal">
+        <item name="android:padding">2dp</item>
+    </style>
+
+</resources>
