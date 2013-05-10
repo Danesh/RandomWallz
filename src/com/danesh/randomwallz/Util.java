@@ -1,10 +1,17 @@
 package com.danesh.randomwallz;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.URL;
+import java.net.URLConnection;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -22,7 +29,7 @@ import android.widget.RemoteViews;
 import android.widget.Toast;
 
 public class Util {
-    
+
     public static File getCacheFile(Context ctx) {
         return new File(ctx.getFilesDir(), "cached_results");
     }
@@ -57,8 +64,8 @@ public class Util {
     }
 
     public static boolean isNetworkAvailable(Context ctx) {
-        ConnectivityManager connectivityManager 
-              = (ConnectivityManager) ctx.getSystemService(Context.CONNECTIVITY_SERVICE);
+        ConnectivityManager connectivityManager =
+            (ConnectivityManager) ctx.getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
         return activeNetworkInfo != null && activeNetworkInfo.isConnected();
     }
@@ -71,7 +78,7 @@ public class Util {
             }
         });        
     }
-    
+
     public static void updateWidgetProgress(final Context ctx, final int progress) {
         new Thread(new Runnable() {
             @Override
@@ -95,8 +102,52 @@ public class Util {
                     appWidgetManager.updateAppWidget(widgetId, remoteViews);
                 }
             }
-            
+
         }).start();
-        
+
+    }
+
+    public static String getWallpaperFile(Context ctx) {
+        return new File(ctx.getFilesDir(),"wallpaper").toString();
+    }
+
+    public static void downloadFile(URL url, String path) throws IOException {
+        int count;
+        URLConnection conection = url.openConnection();
+        conection.connect();
+
+        // input stream to read file - with 8k buffer
+        InputStream input = new BufferedInputStream(url.openStream(), 8192);
+
+        // Output stream to write file
+        OutputStream output = new FileOutputStream(path);
+
+        byte data[] = new byte[1024];
+
+        while ((count = input.read(data)) != -1) {
+            // writing data to file
+            output.write(data, 0, count);
+        }
+
+        // flushing output
+        output.flush();
+
+        // closing streams
+        output.close();
+        input.close();
+    }
+
+    public static void copyFile(File src, File dst) throws IOException {
+        InputStream in = new FileInputStream(src);
+        OutputStream out = new FileOutputStream(dst);
+
+        // Transfer bytes from in to out
+        byte[] buf = new byte[1024];
+        int len;
+        while ((len = in.read(buf)) > 0) {
+            out.write(buf, 0, len);
+        }
+        in.close();
+        out.close();
     }
 }

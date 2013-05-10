@@ -1,9 +1,5 @@
 package com.danesh.randomwallz;
 
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URL;
 
@@ -14,7 +10,6 @@ import org.json.JSONObject;
 
 import android.app.IntentService;
 import android.app.WallpaperManager;
-import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences.Editor;
 import android.graphics.Bitmap;
@@ -25,7 +20,6 @@ import com.danesh.randomwallz.WallBase.WallTypes;
 
 public class RandomWallpaper extends IntentService {
 
-    private static final String TEMP_FILE_NAME = "wallpaper";
     private PreferenceHelper mPrefHelper;
     private WallpaperManager mWallpaperManager;
     private ImageInfo mImageInfo;
@@ -59,47 +53,24 @@ public class RandomWallpaper extends IntentService {
      * @throws IOException
      */
     private void setUrlWallpaper(URL url) throws IOException {
-        BufferedInputStream urlInputStream = null;
-        FileInputStream tmpFileInputStream = null;
-        FileOutputStream tmpFileOutputStream = null;
         Bitmap origBitmap = null;
         BitmapFactory.Options options = new BitmapFactory.Options();
         try {
             options.inSampleSize = calculateInSampleSize();
             options.inTempStorage = new byte[32 * 1024];
 
-            // Get the bitmap from URL
-            urlInputStream = new BufferedInputStream(url.openStream());
+            Util.downloadFile(url, Util.getWallpaperFile(this));
 
             Util.updateWidgetProgress(this, 40);
 
-            origBitmap = BitmapFactory.decodeStream(urlInputStream, null ,options);
+            origBitmap = BitmapFactory.decodeFile(Util.getWallpaperFile(this), options);
 
             Util.updateWidgetProgress(this, 60);
 
             if (origBitmap == null) {
                 Util.showToast(this, "Unable to retrieve wallpaper");
             } else {
-                // Create temporary file
-                tmpFileOutputStream = openFileOutput(TEMP_FILE_NAME, Context.MODE_PRIVATE);
-
-                Util.updateWidgetProgress(this, 70);
-
-                // Save scaled bitmap to temporary file
-                origBitmap.compress(Bitmap.CompressFormat.JPEG, 100, tmpFileOutputStream);
-
-                Util.updateWidgetProgress(this, 85);
-
-                // Read temporary file
-                tmpFileInputStream = openFileInput(TEMP_FILE_NAME);
-
-                Util.updateWidgetProgress(this, 90);
-
-                // Set wallpaper to temporary file
-                mWallpaperManager.setStream(tmpFileInputStream);
-
-                // Delete temporary file
-                new File(getFilesDir(), TEMP_FILE_NAME).delete();
+                mWallpaperManager.setBitmap(origBitmap);
 
                 Editor edit = mPrefHelper.getEditor();
 
@@ -120,15 +91,6 @@ public class RandomWallpaper extends IntentService {
         } finally {
             if (origBitmap != null) {
                 origBitmap.recycle();
-            }
-            if (urlInputStream != null) {
-                urlInputStream.close();
-            }
-            if (tmpFileOutputStream != null) {
-                tmpFileOutputStream.close();
-            }
-            if (tmpFileInputStream != null) {
-                tmpFileInputStream.close();
             }
         }
     }

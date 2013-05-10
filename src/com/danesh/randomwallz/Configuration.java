@@ -1,19 +1,14 @@
 package com.danesh.randomwallz;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.Arrays;
 import java.util.Random;
 
 import android.app.Activity;
-import android.app.WallpaperManager;
 import android.content.Context;
 import android.content.SharedPreferences.Editor;
-import android.graphics.Bitmap;
-import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
@@ -70,7 +65,7 @@ public class Configuration extends Activity {
         return false;
     }
 
-    
+
     @Override
     protected void onStop() {
         super.onStop();
@@ -131,26 +126,17 @@ public class Configuration extends Activity {
                             String folder = Environment.getExternalStorageDirectory() + "/" + FOLDER_NAME;
                             File rootFolder = new File(folder);
                             if (rootFolder.isDirectory() || rootFolder.mkdir()) {
-                                BitmapDrawable curWallpaper = (BitmapDrawable) WallpaperManager.getInstance(mContext.get()).getDrawable();
                                 String lastId = new PreferenceHelper(mContext.get()).getLastWallpaperId();
                                 String newFileName = String.format(FILE_BASE_NAME, lastId.isEmpty() ? new Random().nextInt(Integer.MAX_VALUE) : lastId);
                                 while (lastId.isEmpty() && new File(newFileName).exists()) {
                                     newFileName = String.format(FILE_BASE_NAME, lastId.isEmpty() ? new Random().nextInt(Integer.MAX_VALUE) : lastId);
                                 }
                                 String fullPath = rootFolder + "/" + newFileName;
-                                FileOutputStream saveImg = null;
                                 try {
-                                    saveImg = new FileOutputStream(new File(fullPath));
-                                    curWallpaper.getBitmap().compress(Bitmap.CompressFormat.JPEG, 100, saveImg);
+                                    Util.copyFile(new File(Util.getWallpaperFile(mContext.get())), new File(fullPath));
                                     wasSuccessful = true;
-                                } catch (FileNotFoundException e) {
+                                } catch (IOException e) {
                                     e.printStackTrace();
-                                } finally {
-                                    try {
-                                        saveImg.close();
-                                    } catch (IOException e) {
-                                        e.printStackTrace();
-                                    }
                                 }
                             }
                         }
