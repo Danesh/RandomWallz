@@ -144,12 +144,7 @@ public class Configuration extends Activity {
                                 String fullPath = rootFolder + "/" + newFileName;
                                 File wallpaperFile = Util.getWallpaperFile(context);
                                 if (wallpaperFile.exists()) {
-                                    try {
-                                        Util.copyFile(wallpaperFile, new File(fullPath));
-                                        wasSuccessful = true;
-                                    } catch (IOException e) {
-                                        e.printStackTrace();
-                                    }
+                                    wasSuccessful = Util.copyFile(wallpaperFile, new File(fullPath));
                                 } else {
                                     BitmapDrawable curWallpaper = (BitmapDrawable) WallpaperManager.getInstance(context).getDrawable();
                                     FileOutputStream saveImg = null;

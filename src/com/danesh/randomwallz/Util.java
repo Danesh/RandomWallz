@@ -10,8 +10,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.HttpURLConnection;
 import java.net.URL;
-import java.net.URLConnection;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -111,43 +111,86 @@ public class Util {
         return new File(ctx.getFilesDir(),"wallpaper");
     }
 
-    public static void downloadFile(URL url, File path) throws IOException {
-        int count;
-        URLConnection conection = url.openConnection();
-        conection.connect();
+    public static boolean downloadFile(URL url, File path) {
+        HttpURLConnection connection = null;
+        InputStream in = null;
+        OutputStream out = null;
+        try {
+            connection  = (HttpURLConnection) url.openConnection();
+            connection.connect();
 
-        // input stream to read file - with 8k buffer
-        InputStream input = new BufferedInputStream(url.openStream(), 8192);
+            // input stream to read file - with 8k buffer
+            in = new BufferedInputStream(connection.getInputStream(), 8192);
 
-        // Output stream to write file
-        OutputStream output = new FileOutputStream(path);
+            // Output stream to write file
+            out = new FileOutputStream(path);
 
-        byte data[] = new byte[1024];
+            byte data[] = new byte[1024];
+            int count;
 
-        while ((count = input.read(data)) != -1) {
-            // writing data to file
-            output.write(data, 0, count);
+            while ((count = in.read(data)) != -1) {
+                // writing data to file
+                out.write(data, 0, count);
+            }
+
+            // flushing output
+            out.flush();
+
+            return true;
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            if (connection != null) {
+                connection.disconnect();
+            }
+            if (in != null) {
+                try {
+                    in.close();
+                } catch (IOException e1) {
+                }
+            }
+            if (out != null) {
+                try {
+                    out.close();
+                } catch (IOException e1) {
+                }
+            }
         }
-
-        // flushing output
-        output.flush();
-
-        // closing streams
-        output.close();
-        input.close();
+        return false;
     }
 
-    public static void copyFile(File src, File dst) throws IOException {
-        InputStream in = new FileInputStream(src);
-        OutputStream out = new FileOutputStream(dst);
+    public static boolean copyFile(File src, File dst) {
+        if (src.exists()) {
+            InputStream in = null;
+            OutputStream out = null;
+            try {
+                in = new FileInputStream(src);
+                out = new FileOutputStream(dst);
 
-        // Transfer bytes from in to out
-        byte[] buf = new byte[1024];
-        int len;
-        while ((len = in.read(buf)) > 0) {
-            out.write(buf, 0, len);
+                // Transfer bytes from in to out
+                byte[] buf = new byte[1024];
+                int len;
+                while ((len = in.read(buf)) > 0) {
+                    out.write(buf, 0, len);
+                }
+                return true;
+            } catch (IOException e) {
+                e.printStackTrace();
+            } finally {
+                if (in != null) {
+                    try {
+                        in.close();
+                    } catch (IOException e1) {
+                    }
+                }
+                if (out != null) {
+                    try {
+                        out.close();
+                    } catch (IOException e1) {
+                    }
+                }
+            }
         }
-        in.close();
-        out.close();
+        return false;
     }
 }

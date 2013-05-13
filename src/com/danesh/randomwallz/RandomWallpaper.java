@@ -58,9 +58,12 @@ public class RandomWallpaper extends IntentService {
         try {
             options.inPreferredConfig = Bitmap.Config.RGB_565;
             options.inSampleSize = calculateInSampleSize();
-            options.inTempStorage = new byte[32 * 1024];
 
-            Util.downloadFile(url, Util.getWallpaperFile(this));
+            if (!Util.downloadFile(url, Util.getWallpaperFile(this))) {
+                mPrefHelper.incFailedAttempts();
+                Util.showToast(this, getString(R.string.unable_set_wallpaper_toast));
+                return;
+            }
 
             Util.updateWidgetProgress(this, 40);
 
@@ -86,15 +89,12 @@ public class RandomWallpaper extends IntentService {
 
                 edit.apply();
             }
-        } catch (IOException e) {
-            // Error occurred while decoding bitmap
-            e.printStackTrace();
-            mPrefHelper.incFailedAttempts();
-            Util.showToast(this, getString(R.string.unable_set_wallpaper_toast));
         } finally {
             if (origBitmap != null) {
                 origBitmap.recycle();
             }
+            // Helps to reclaim bitmap memory in preparation for next cycle.
+            System.gc();
         }
     }
 
