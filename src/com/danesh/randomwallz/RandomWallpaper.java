@@ -68,7 +68,7 @@ public class RandomWallpaper extends IntentService {
             Util.updateWidgetProgress(this, 60);
 
             if (origBitmap == null) {
-                Util.showToast(this, "Unable to retrieve wallpaper");
+                Util.showToast(this, getString(R.string.unable_retrieve_wallpaper));
             } else {
                 mWallpaperManager.setBitmap(origBitmap);
 
@@ -89,8 +89,7 @@ public class RandomWallpaper extends IntentService {
             // Error occurred while decoding bitmap
             e.printStackTrace();
             mPrefHelper.incFailedAttempts();
-        } catch (OutOfMemoryError e) {
-            e.printStackTrace();
+            Util.showToast(this, getString(R.string.unable_set_wallpaper_toast));
         } finally {
             if (origBitmap != null) {
                 origBitmap.recycle();
@@ -191,13 +190,13 @@ public class RandomWallpaper extends IntentService {
                     Util.saveCacheResults(this, storedCache);
                     TimerUpdate.setTimer(this);
                 } else {
-                    Util.showToast(this, "Unable to retrieve wallpaper");
+                    Util.showToast(this, getString(R.string.unable_retrieve_wallpaper));
 
                 }
                 Util.updateWidgetProgress(this, 100);
             }
         } else {
-            Util.showToast(this, "Unable to retrieve wallpaper");
+            Util.showToast(this, getString(R.string.unable_retrieve_wallpaper));
         }
         if (intent.hasExtra(WidgetProvider.FORCED_EXTRA)) {
             TimerUpdate.setTimer(this);
