@@ -55,7 +55,7 @@ public class PreferenceHelper {
         mSharedPreferences.edit().putInt(FAILED_ATTEMPTS, 0).apply();
     }
 
-    public boolean getWallpaperChanged() {
-        return mSharedPreferences.getBoolean(WALLPAPER_CHANGED, false);
+    public long getWallpaperChanged() {
+        return mSharedPreferences.getLong(WALLPAPER_CHANGED, 0);
     }
 }

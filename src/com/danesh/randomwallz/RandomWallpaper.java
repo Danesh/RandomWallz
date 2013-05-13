@@ -56,6 +56,7 @@ public class RandomWallpaper extends IntentService {
         Bitmap origBitmap = null;
         BitmapFactory.Options options = new BitmapFactory.Options();
         try {
+            options.inPreferredConfig = Bitmap.Config.RGB_565;
             options.inSampleSize = calculateInSampleSize();
             options.inTempStorage = new byte[32 * 1024];
 
@@ -63,7 +64,7 @@ public class RandomWallpaper extends IntentService {
 
             Util.updateWidgetProgress(this, 40);
 
-            origBitmap = BitmapFactory.decodeFile(Util.getWallpaperFile(this), options);
+            origBitmap = BitmapFactory.decodeFile(Util.getWallpaperFile(this).toString(), options);
 
             Util.updateWidgetProgress(this, 60);
 
@@ -80,8 +81,8 @@ public class RandomWallpaper extends IntentService {
                 // Save wallpaper url. Used for debugging purposes
                 edit.putString(Configuration.LAST_URL, url.toString());
 
-                // Set flag to communicate that wallpaper change was by this app
-                edit.putBoolean(PreferenceHelper.WALLPAPER_CHANGED, true);
+                // Sets the time of when we changed the wallpaper
+                edit.putLong(PreferenceHelper.WALLPAPER_CHANGED, System.currentTimeMillis());
 
                 edit.apply();
             }

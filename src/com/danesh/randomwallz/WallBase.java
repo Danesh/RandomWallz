@@ -307,7 +307,7 @@ public final class WallBase {
                 return null;
             }
 
-            ExecutorService executor = Executors.newCachedThreadPool();
+            ExecutorService executor = Executors.newFixedThreadPool(10);
             for (int i = 0; i < jsonResponse.length(); i++) {
                 executor.execute(new WallpaperParser(jsonResponse.getJSONObject(i)));
             }

@@ -107,11 +107,11 @@ public class Util {
 
     }
 
-    public static String getWallpaperFile(Context ctx) {
-        return new File(ctx.getFilesDir(),"wallpaper").toString();
+    public static File getWallpaperFile(Context ctx) {
+        return new File(ctx.getFilesDir(),"wallpaper");
     }
 
-    public static void downloadFile(URL url, String path) throws IOException {
+    public static void downloadFile(URL url, File path) throws IOException {
         int count;
         URLConnection conection = url.openConnection();
         conection.connect();

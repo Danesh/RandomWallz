@@ -142,10 +142,10 @@ public class Configuration extends Activity {
                                     newFileName = String.format(FILE_BASE_NAME, lastId.isEmpty() ? new Random().nextInt(Integer.MAX_VALUE) : lastId);
                                 }
                                 String fullPath = rootFolder + "/" + newFileName;
-                                PreferenceHelper prefHelper = new PreferenceHelper(context);
-                                if (prefHelper.getWallpaperChanged()) {
+                                File wallpaperFile = Util.getWallpaperFile(context);
+                                if (wallpaperFile.exists()) {
                                     try {
-                                        Util.copyFile(new File(Util.getWallpaperFile(context)), new File(fullPath));
+                                        Util.copyFile(wallpaperFile, new File(fullPath));
                                         wasSuccessful = true;
                                     } catch (IOException e) {
                                         e.printStackTrace();
