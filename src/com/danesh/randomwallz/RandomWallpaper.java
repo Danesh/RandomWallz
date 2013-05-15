@@ -77,22 +77,22 @@ public class RandomWallpaper extends IntentService {
             options.inPreferredConfig = Bitmap.Config.RGB_565;
             options.inSampleSize = calculateInSampleSize();
 
-            if (!Util.downloadFile(url, Util.getWallpaperFile(this))) {
+            if (!Util.downloadImage(this, url, Util.getWallpaperFile(this), 20, 60)) {
                 mPrefHelper.incFailedAttempts();
                 Util.showToast(this, getString(R.string.unable_set_wallpaper_toast));
                 return;
             }
 
-            Util.updateWidgetProgress(this, 40);
-
             origBitmap = BitmapFactory.decodeFile(Util.getWallpaperFile(this).toString(), options);
 
-            Util.updateWidgetProgress(this, 60);
+            Util.setWidgetProgress(this, 85);
 
             if (origBitmap == null) {
                 Util.showToast(this, getString(R.string.unable_retrieve_wallpaper));
             } else {
                 mWallpaperManager.setBitmap(origBitmap);
+
+                Util.setWidgetProgress(this, 95);
 
                 Editor edit = mPrefHelper.getEditor();
 
@@ -144,7 +144,7 @@ public class RandomWallpaper extends IntentService {
             JSONObject storedCache = null;
             JSONArray jsonResponse = null;
             int index = 0;
-            Util.updateWidgetProgress(this, 5);
+            Util.setWidgetProgress(this, 5);
             try {
                 // Check if cached urls exist
                 if (Util.getCacheFile(this).exists() && mPrefHelper.getFailedAttempts() < 2) {
@@ -155,7 +155,6 @@ public class RandomWallpaper extends IntentService {
                     if (storedCache.has("results")) {
                         jsonResponse = storedCache.getJSONArray("results");
                     }
-                    Util.updateWidgetProgress(this, 15);
                 }
 
                 // If no cache was found or if all entries are used, do a new query
@@ -176,8 +175,9 @@ public class RandomWallpaper extends IntentService {
                         mPrefHelper.resetFailedAttempts();
                         index = 0;
                     }
-                    Util.updateWidgetProgress(this, 15);
                 }
+
+                Util.setWidgetProgress(this, 15);
 
                 if (jsonResponse != null) {
                     JSONObject selectedImage = jsonResponse.getJSONObject(index);
@@ -187,7 +187,7 @@ public class RandomWallpaper extends IntentService {
                     mImageInfo.height = imageAttrs.getInt("wall_h");
                     mImageInfo.width = imageAttrs.getInt("wall_w");
 
-                    Util.updateWidgetProgress(this, 20);
+                    Util.setWidgetProgress(this, 20);
 
                     try {
                         setUrlWallpaper(new URL(selectedImage.getString("url")));
@@ -212,11 +212,12 @@ public class RandomWallpaper extends IntentService {
                     Util.showToast(this, getString(R.string.unable_retrieve_wallpaper));
 
                 }
-                Util.updateWidgetProgress(this, 100);
+                Util.setWidgetProgress(this, 100);
             }
         } else {
             Util.showToast(this, getString(R.string.unable_retrieve_wallpaper));
         }
+        // Reset the timer if user forced a refresh
         if (intent.hasExtra(WidgetProvider.FORCED_EXTRA)) {
             TimerUpdate.setTimer(this);
         }

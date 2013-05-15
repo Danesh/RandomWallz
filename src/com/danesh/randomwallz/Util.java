@@ -30,6 +30,8 @@ import android.widget.Toast;
 
 public class Util {
 
+    private static Integer sProgressStatus = Integer.valueOf(0);
+
     public static File getCacheFile(Context ctx) {
         return new File(ctx.getFilesDir(), "cached_results");
     }
@@ -79,44 +81,44 @@ public class Util {
         });        
     }
 
-    public static void updateWidgetProgress(final Context ctx, final int progress) {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(ctx);
-                ComponentName comp = new ComponentName(ctx, WidgetProvider.class);
-                for (int widgetId : appWidgetManager.getAppWidgetIds(comp)) {
-                    RemoteViews remoteViews = new RemoteViews(ctx.getPackageName(), R.layout.widget_layout);
-                    remoteViews.setProgressBar(R.id.progress, 100, progress, false);
-                    // Set refresh intent
-                    Intent intent = new Intent(ctx, RandomWallpaper.class);
-                    PendingIntent pendingIntent = PendingIntent.getService(ctx,
-                            0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-                    remoteViews.setOnClickPendingIntent(R.id.refresh, pendingIntent);
-                    // Set configuration intent
-                    intent = new Intent(ctx, Configuration.class);
-                    intent.putExtra(WidgetProvider.FORCED_EXTRA, true);
-                    pendingIntent = PendingIntent.getActivity(ctx,
-                            0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-                    remoteViews.setOnClickPendingIntent(R.id.config, pendingIntent);
-                    appWidgetManager.updateAppWidget(widgetId, remoteViews);
-                }
+    public static void setWidgetProgress(final Context ctx, final int progress) {
+        AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(ctx);
+        ComponentName comp = new ComponentName(ctx, WidgetProvider.class);
+        RemoteViews remoteViews = new RemoteViews(ctx.getPackageName(), R.layout.widget_layout);
+        // Set refresh intent
+        Intent intent = new Intent(ctx, RandomWallpaper.class);
+        PendingIntent pendingIntent = PendingIntent.getService(ctx,
+                0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        remoteViews.setOnClickPendingIntent(R.id.refresh, pendingIntent);
+        // Set configuration intent
+        intent = new Intent(ctx, Configuration.class);
+        intent.putExtra(WidgetProvider.FORCED_EXTRA, true);
+        pendingIntent = PendingIntent.getActivity(ctx,
+                0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        remoteViews.setOnClickPendingIntent(R.id.config, pendingIntent);
+        for (; sProgressStatus <= progress; sProgressStatus++) {
+            remoteViews.setProgressBar(R.id.progress, 100, sProgressStatus, false);
+            for (int widgetId : appWidgetManager.getAppWidgetIds(comp)) {
+                appWidgetManager.updateAppWidget(widgetId, remoteViews);
             }
-
-        }).start();
-
+        }
+        if (progress >= 100) {
+            sProgressStatus = 0;
+        }
     }
 
     public static File getWallpaperFile(Context ctx) {
         return new File(ctx.getFilesDir(),"wallpaper");
     }
 
-    public static boolean downloadFile(URL url, File path) {
+    public static boolean downloadImage(Context ctx, URL url, File path,
+            int currentProgress, int allocatedProgress) {
         HttpURLConnection connection = null;
         InputStream in = null;
         OutputStream out = null;
         try {
             connection  = (HttpURLConnection) url.openConnection();
+            long totalLength = connection.getContentLength();
             connection.connect();
 
             // input stream to read file - with 8k buffer
@@ -126,9 +128,12 @@ public class Util {
             out = new FileOutputStream(path);
 
             byte data[] = new byte[1024];
-            int count;
-
+            int count, current = 0;
+            float imageProgress = 0f;
             while ((count = in.read(data)) != -1) {
+                current += count;
+                imageProgress = (float) current / totalLength;
+                Util.setWidgetProgress(ctx, currentProgress + (int) (imageProgress * allocatedProgress));
                 // writing data to file
                 out.write(data, 0, count);
             }
