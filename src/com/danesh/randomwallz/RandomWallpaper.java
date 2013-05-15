@@ -1,5 +1,6 @@
 package com.danesh.randomwallz;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 
@@ -14,6 +15,7 @@ import android.content.Intent;
 import android.content.SharedPreferences.Editor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.net.http.HttpResponseCache;
 
 import com.danesh.randomwallz.WallBase.ResFilter;
 import com.danesh.randomwallz.WallBase.WallTypes;
@@ -41,10 +43,26 @@ public class RandomWallpaper extends IntentService {
             mWallpaperManager = WallpaperManager.getInstance(this);
             HAS_JOBS = true;
             mImageInfo = new ImageInfo();
+            try {
+                File httpCacheDir = new File(getCacheDir(), "http");
+                long httpCacheSize = 10 * 1024 * 1024;
+                HttpResponseCache.install(httpCacheDir, httpCacheSize);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
             return super.onStartCommand(intent, flags, startId);
         } else {
             return 0;
         }
+    }
+
+    @Override
+    public void onDestroy() {
+        HttpResponseCache cache = HttpResponseCache.getInstalled();
+        if (cache != null) {
+            cache.flush();
+        }
+        super.onDestroy();
     }
 
     /**
