@@ -129,7 +129,7 @@ public class Util {
 
             byte data[] = new byte[1024];
             int count, current = 0;
-            float imageProgress = 0f;
+            float imageProgress;
             while ((count = in.read(data)) != -1) {
                 current += count;
                 imageProgress = (float) current / totalLength;

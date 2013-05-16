@@ -2,8 +2,10 @@ package com.danesh.randomwallz;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 
+import android.os.Build;
 import org.apache.http.ParseException;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -43,12 +45,16 @@ public class RandomWallpaper extends IntentService {
             mWallpaperManager = WallpaperManager.getInstance(this);
             HAS_JOBS = true;
             mImageInfo = new ImageInfo();
-            try {
-                File httpCacheDir = new File(getCacheDir(), "http");
-                long httpCacheSize = 10 * 1024 * 1024;
-                HttpResponseCache.install(httpCacheDir, httpCacheSize);
-            } catch (IOException e) {
-                e.printStackTrace();
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2){
+                try {
+                    File httpCacheDir = new File(getCacheDir(), "http");
+                    long httpCacheSize = 10 * 1024 * 1024;
+                    Class.forName("android.net.http.HttpResponseCache")
+                            .getMethod("install", File.class, long.class)
+                            .invoke(null, httpCacheDir, httpCacheSize);
+                } catch (Exception e ) {
+                    e.printStackTrace();
+                }
             }
             return super.onStartCommand(intent, flags, startId);
         } else {
@@ -58,9 +64,17 @@ public class RandomWallpaper extends IntentService {
 
     @Override
     public void onDestroy() {
-        HttpResponseCache cache = HttpResponseCache.getInstalled();
-        if (cache != null) {
-            cache.flush();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2){
+            try {
+                Object inst = Class.forName("android.net.http.HttpResponseCache")
+                        .getMethod("getInstalled").invoke(null);
+                if (inst != null) {
+                    Class.forName("android.net.http.HttpResponseCache")
+                            .getMethod("flush").invoke(inst);
+                }
+            } catch (Exception e ) {
+                e.printStackTrace();
+            }
         }
         super.onDestroy();
     }
@@ -92,8 +106,6 @@ public class RandomWallpaper extends IntentService {
             } else {
                 mWallpaperManager.setBitmap(origBitmap);
 
-                Util.setWidgetProgress(this, 95);
-
                 Editor edit = mPrefHelper.getEditor();
 
                 // Save wallpaper id. Used for filename when saving wallpaper
@@ -106,6 +118,8 @@ public class RandomWallpaper extends IntentService {
                 edit.putLong(PreferenceHelper.WALLPAPER_CHANGED, System.currentTimeMillis());
 
                 edit.apply();
+
+                Util.setWidgetProgress(this, 95);
             }
         } finally {
             if (origBitmap != null) {
