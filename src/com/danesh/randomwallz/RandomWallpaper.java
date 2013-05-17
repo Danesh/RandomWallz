@@ -1,10 +1,10 @@
 package com.danesh.randomwallz;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 
+import android.content.Context;
 import android.os.Build;
 import org.apache.http.ParseException;
 import org.json.JSONArray;
@@ -87,8 +87,10 @@ public class RandomWallpaper extends IntentService {
     private void setUrlWallpaper(URL url) throws IOException {
         Bitmap origBitmap = null;
         BitmapFactory.Options options = new BitmapFactory.Options();
+        File cachedBitmap = new File(getCacheDir(), "wallpaper");
+        FileOutputStream cacheBitmapOutputStream = new FileOutputStream(cachedBitmap);
+        FileInputStream cacheBitmapInputStream = new FileInputStream(cachedBitmap);
         try {
-            options.inPreferredConfig = Bitmap.Config.RGB_565;
             options.inSampleSize = calculateInSampleSize();
 
             if (!Util.downloadImage(this, url, Util.getWallpaperFile(this), 20, 60)) {
@@ -98,13 +100,14 @@ public class RandomWallpaper extends IntentService {
             }
 
             origBitmap = BitmapFactory.decodeFile(Util.getWallpaperFile(this).toString(), options);
+            origBitmap.compress(Bitmap.CompressFormat.JPEG, 100, cacheBitmapOutputStream);
 
             Util.setWidgetProgress(this, 85);
 
             if (origBitmap == null) {
                 Util.showToast(this, getString(R.string.unable_retrieve_wallpaper));
             } else {
-                mWallpaperManager.setBitmap(origBitmap);
+                mWallpaperManager.setStream(cacheBitmapInputStream);
 
                 Editor edit = mPrefHelper.getEditor();
 
@@ -127,6 +130,15 @@ public class RandomWallpaper extends IntentService {
             }
             // Helps to reclaim bitmap memory in preparation for next cycle.
             System.gc();
+            if(cacheBitmapInputStream != null) {
+                cacheBitmapInputStream.close();
+            }
+            if(cacheBitmapOutputStream != null) {
+                cacheBitmapOutputStream.close();
+            }
+            if (cachedBitmap.exists()) {
+                cachedBitmap.delete();
+            }
         }
     }
 
