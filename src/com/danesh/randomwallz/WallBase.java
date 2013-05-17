@@ -27,6 +27,7 @@ import org.json.JSONObject;
 import android.text.TextUtils;
 import android.util.Base64;
 
+@SuppressWarnings("UnusedDeclaration")
 public final class WallBase {
 
     public static enum OrderBy {
@@ -176,6 +177,7 @@ public final class WallBase {
      * Sets the filter for resolution filtering
      * @param filter
      */
+    @SuppressWarnings("SameParameterValue")
     public void setResolutionFilter(ResFilter filter) {
         mResolutionFilter = filter.value;
     }
@@ -208,7 +210,7 @@ public final class WallBase {
         mSafeMode = enable ? "100" : "010";
     }
 
-    private static final String getQuery(List<NameValuePair> params) throws UnsupportedEncodingException {
+    private static String getQuery(List<NameValuePair> params) throws UnsupportedEncodingException {
         StringBuilder result = new StringBuilder();
         boolean first = true;
         for (NameValuePair pair : params) {
@@ -226,7 +228,7 @@ public final class WallBase {
 
     private class WallpaperParser implements Runnable {
 
-        private JSONObject mSelectedImage;
+        private final JSONObject mSelectedImage;
 
         WallpaperParser(JSONObject selectedImage) {
             mSelectedImage = selectedImage;

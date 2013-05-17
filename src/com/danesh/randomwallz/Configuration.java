@@ -67,11 +67,8 @@ public class Configuration extends Activity {
     }
 
     private boolean shouldClearCache() {
-        if ((!mPrefHelper.getSearchTerm().equals(mSearchTerm.getText().toString()))
-                || (mPrefHelper.getSafeMode() != mSafeMode.isChecked())) {
-            return true;
-        }
-        return false;
+        return ((!mPrefHelper.getSearchTerm().equals(mSearchTerm.getText().toString()))
+                || (mPrefHelper.getSafeMode() != mSafeMode.isChecked()));
     }
 
 

@@ -87,7 +87,7 @@ public class RandomWallpaper extends IntentService {
     private void setUrlWallpaper(URL url) throws IOException {
         Bitmap origBitmap = null;
         BitmapFactory.Options options = new BitmapFactory.Options();
-        File cachedBitmap = new File(getCacheDir(), "wallpaper");
+        File cachedBitmap = new File(getExternalCacheDir(), "wallpaper");
         FileOutputStream cacheBitmapOutputStream = new FileOutputStream(cachedBitmap);
         FileInputStream cacheBitmapInputStream = new FileInputStream(cachedBitmap);
         try {
@@ -183,7 +183,7 @@ public class RandomWallpaper extends IntentService {
      * width/height of wallpaper manager.
      * @return an integer for the inSampleSize property of BitmapOptions
      */
-    public int calculateInSampleSize() {
+    int calculateInSampleSize() {
         int desiredWidth = getResizedDimension(mWallpaperManager.getDesiredMinimumWidth(),
                 mWallpaperManager.getDesiredMinimumHeight(), mImageInfo.width, mImageInfo.height);
         int desiredHeight = getResizedDimension(mWallpaperManager.getDesiredMinimumHeight(),

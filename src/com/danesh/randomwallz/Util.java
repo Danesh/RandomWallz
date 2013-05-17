@@ -28,9 +28,9 @@ import android.os.Looper;
 import android.widget.RemoteViews;
 import android.widget.Toast;
 
-public class Util {
+class Util {
 
-    private static Integer sProgressStatus = Integer.valueOf(0);
+    private static Integer sProgressStatus = 0;
 
     public static File getCacheFile(Context ctx) {
         return new File(ctx.getFilesDir(), "cached_results");
@@ -111,6 +111,7 @@ public class Util {
         return new File(ctx.getFilesDir(),"wallpaper");
     }
 
+    @SuppressWarnings({"BooleanMethodIsAlwaysInverted", "SameParameterValue"})
     public static boolean downloadImage(Context ctx, URL url, File path,
             int currentProgress, int allocatedProgress) {
         HttpURLConnection connection = null;
@@ -151,13 +152,13 @@ public class Util {
             if (in != null) {
                 try {
                     in.close();
-                } catch (IOException e1) {
+                } catch (IOException ignored) {
                 }
             }
             if (out != null) {
                 try {
                     out.close();
-                } catch (IOException e1) {
+                } catch (IOException ignored) {
                 }
             }
         }
@@ -185,13 +186,13 @@ public class Util {
                 if (in != null) {
                     try {
                         in.close();
-                    } catch (IOException e1) {
+                    } catch (IOException ignored) {
                     }
                 }
                 if (out != null) {
                     try {
                         out.close();
-                    } catch (IOException e1) {
+                    } catch (IOException ignored) {
                     }
                 }
             }

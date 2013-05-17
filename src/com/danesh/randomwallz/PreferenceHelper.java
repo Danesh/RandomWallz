@@ -5,19 +5,19 @@ import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.preference.PreferenceManager;
 
-public class PreferenceHelper {
+class PreferenceHelper {
 
     static final String SEARCH_TERM = "pref_search_term";
-    static final String DEFAULT_SEARCH_TERM = "android";
+    private static final String DEFAULT_SEARCH_TERM = "android";
     static final String SAFE_MODE = "pref_safe_search";
-    static final boolean DEFAULT_SAFE_MODE = true;
+    private static final boolean DEFAULT_SAFE_MODE = true;
     static final String LAST_ID = "pref_last_id";
     static final String TIMER_INTERVAL = "pref_timer_interval";
-    static final String DEFAULT_TIMER_INTERVAL = "0";
-    static final String FAILED_ATTEMPTS = "failed_attempts";
+    private static final String DEFAULT_TIMER_INTERVAL = "0";
+    private static final String FAILED_ATTEMPTS = "failed_attempts";
     static final String WALLPAPER_CHANGED = "wallpaper_changed";
     
-    SharedPreferences mSharedPreferences;
+    private final SharedPreferences mSharedPreferences;
 
     PreferenceHelper(Context ctx) {
         mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(ctx);
