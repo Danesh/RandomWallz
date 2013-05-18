@@ -71,7 +71,6 @@ public class Configuration extends Activity {
                 || (mPrefHelper.getSafeMode() != mSafeMode.isChecked()));
     }
 
-
     @Override
     protected void onStop() {
         super.onStop();
@@ -97,17 +96,19 @@ public class Configuration extends Activity {
             Toast.makeText(this, R.string.search_empty_error, Toast.LENGTH_SHORT).show();
             return;
         }
+        boolean setNewTimer = !mTimerValues[mTimerInterval.getSelectedItemPosition()]
+                .equals(mPrefHelper.getTimerInterval());
         if (shouldClearCache()) {
             Util.getCacheFile(this).delete();
-        }
-        if (!mTimerValues[mTimerInterval.getSelectedItemPosition()].equals(mPrefHelper.getTimerInterval())) {
-            TimerUpdate.setTimer(this);
         }
         Editor editor = mPrefHelper.getEditor();
         editor.putString(PreferenceHelper.SEARCH_TERM, mSearchTerm.getText().toString());
         editor.putBoolean(PreferenceHelper.SAFE_MODE, mSafeMode.isChecked());
         editor.putString(PreferenceHelper.TIMER_INTERVAL, mTimerValues[mTimerInterval.getSelectedItemPosition()]);
         editor.apply();
+        if (setNewTimer) {
+            TimerUpdate.setTimer(this);
+        }
         cancel(null);
     }
 

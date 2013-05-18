@@ -1,21 +1,5 @@
 package com.danesh.randomwallz;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
-
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;
 import android.content.ComponentName;
@@ -27,10 +11,14 @@ import android.os.Handler;
 import android.os.Looper;
 import android.widget.RemoteViews;
 import android.widget.Toast;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.*;
+import java.net.HttpURLConnection;
+import java.net.URL;
 
 class Util {
-
-    private static Integer sProgressStatus = 0;
 
     public static File getCacheFile(Context ctx) {
         return new File(ctx.getFilesDir(), "cached_results");
@@ -82,29 +70,25 @@ class Util {
     }
 
     public static void setWidgetProgress(final Context ctx, final int progress) {
-        AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(ctx);
-        ComponentName comp = new ComponentName(ctx, WidgetProvider.class);
+        if (!RandomWallpaper.sUpdateProgress) {
+            return;
+        }
         RemoteViews remoteViews = new RemoteViews(ctx.getPackageName(), R.layout.widget_layout);
         // Set refresh intent
         Intent intent = new Intent(ctx, RandomWallpaper.class);
+        intent.setAction("UPDATE_WIDGET");
+        intent.putExtra(WidgetProvider.FORCED_EXTRA, true);
         PendingIntent pendingIntent = PendingIntent.getService(ctx,
                 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
         remoteViews.setOnClickPendingIntent(R.id.refresh, pendingIntent);
         // Set configuration intent
         intent = new Intent(ctx, Configuration.class);
-        intent.putExtra(WidgetProvider.FORCED_EXTRA, true);
         pendingIntent = PendingIntent.getActivity(ctx,
                 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
         remoteViews.setOnClickPendingIntent(R.id.config, pendingIntent);
-        for (; sProgressStatus <= progress; sProgressStatus++) {
-            remoteViews.setProgressBar(R.id.progress, 100, sProgressStatus, false);
-            for (int widgetId : appWidgetManager.getAppWidgetIds(comp)) {
-                appWidgetManager.updateAppWidget(widgetId, remoteViews);
-            }
-        }
-        if (progress >= 100) {
-            sProgressStatus = 0;
-        }
+        remoteViews.setProgressBar(R.id.progress, 100, progress, false);
+        ComponentName comp = new ComponentName(ctx, WidgetProvider.class);
+        AppWidgetManager.getInstance(ctx).updateAppWidget(comp, remoteViews);
     }
 
     public static File getWallpaperFile(Context ctx) {
@@ -119,7 +103,7 @@ class Util {
         OutputStream out = null;
         try {
             connection  = (HttpURLConnection) url.openConnection();
-            long totalLength = connection.getContentLength();
+            int totalLength = connection.getContentLength();
             connection.connect();
 
             // input stream to read file - with 8k buffer
@@ -128,15 +112,17 @@ class Util {
             // Output stream to write file
             out = new FileOutputStream(path);
 
-            byte data[] = new byte[1024];
-            int count, current = 0;
-            float imageProgress;
-            while ((count = in.read(data)) != -1) {
-                current += count;
-                imageProgress = (float) current / totalLength;
-                Util.setWidgetProgress(ctx, currentProgress + (int) (imageProgress * allocatedProgress));
-                // writing data to file
-                out.write(data, 0, count);
+            byte buffer[] = new byte[1024];
+            int bytesRead, currentLength = 0, barProgress, lastProgress = 0;
+            while ((bytesRead = in.read(buffer)) != -1) {
+                currentLength += bytesRead;
+                barProgress = (int) (currentProgress + ((float) currentLength / totalLength) * allocatedProgress);
+                if (barProgress - lastProgress >= 10) {
+                    Util.setWidgetProgress(ctx, barProgress);
+                    lastProgress = barProgress;
+                }
+                // writing buffer to file
+                out.write(buffer, 0, bytesRead);
             }
 
             // flushing output

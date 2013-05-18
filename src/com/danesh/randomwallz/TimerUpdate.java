@@ -25,7 +25,6 @@ public class TimerUpdate extends BroadcastReceiver {
             if (time != 0) {
                 PendingIntent pIntent = getPendingIntent(ctx);
                 AlarmManager alarmManager = (AlarmManager) ctx.getSystemService(Context.ALARM_SERVICE);
-                alarmManager.cancel(pIntent);
                 alarmManager.setRepeating(AlarmManager.RTC, System.currentTimeMillis() + time, time, pIntent);
             }
         } catch (NumberFormatException e) {

@@ -15,20 +15,19 @@ public class WidgetProvider extends AppWidgetProvider {
 
     @Override
     public void onUpdate(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {
-        for (int widgetId : appWidgetIds) {
-            RemoteViews remoteViews = new RemoteViews(context.getPackageName(), R.layout.widget_layout);
-            // Set refresh intent
-            Intent intent = new Intent(context, RandomWallpaper.class);
-            PendingIntent pendingIntent = PendingIntent.getService(context,
-                    0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-            remoteViews.setOnClickPendingIntent(R.id.refresh, pendingIntent);
-            // Set configuration intent
-            intent = new Intent(context, Configuration.class);
-            intent.putExtra(FORCED_EXTRA, true);
-            pendingIntent = PendingIntent.getActivity(context,
-                    0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-            remoteViews.setOnClickPendingIntent(R.id.config, pendingIntent);
-            appWidgetManager.updateAppWidget(widgetId, remoteViews);
-        }
+        RemoteViews remoteViews = new RemoteViews(context.getPackageName(), R.layout.widget_layout);
+        // Set refresh intent
+        Intent intent = new Intent(context, RandomWallpaper.class);
+        intent.setAction("UPDATE_WIDGET");
+        intent.putExtra(FORCED_EXTRA, true);
+        PendingIntent pendingIntent = PendingIntent.getService(context,
+                0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        remoteViews.setOnClickPendingIntent(R.id.refresh, pendingIntent);
+        // Set configuration intent
+        intent = new Intent(context, Configuration.class);
+        pendingIntent = PendingIntent.getActivity(context,
+                0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        remoteViews.setOnClickPendingIntent(R.id.config, pendingIntent);
+        appWidgetManager.updateAppWidget(appWidgetIds, remoteViews);
     }
 }

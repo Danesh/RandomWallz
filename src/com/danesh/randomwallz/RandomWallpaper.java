@@ -24,6 +24,7 @@ import com.danesh.randomwallz.WallBase.WallTypes;
 
 public class RandomWallpaper extends IntentService {
 
+    static boolean sUpdateProgress;
     private PreferenceHelper mPrefHelper;
     private WallpaperManager mWallpaperManager;
     private ImageInfo mImageInfo;
@@ -40,6 +41,7 @@ public class RandomWallpaper extends IntentService {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (!HAS_JOBS) {
+            sUpdateProgress = intent.hasExtra(WidgetProvider.FORCED_EXTRA);
             TimerUpdate.cancelAllAlarms(this);
             mPrefHelper = new PreferenceHelper(this);
             mWallpaperManager = WallpaperManager.getInstance(this);
