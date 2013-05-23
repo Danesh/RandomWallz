@@ -1,22 +1,19 @@
 package com.danesh.randomwallz;
 
-import java.io.*;
-import java.net.URL;
-
-import android.os.Build;
-import org.apache.http.ParseException;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import android.app.IntentService;
 import android.app.WallpaperManager;
 import android.content.Intent;
 import android.content.SharedPreferences.Editor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-
 import com.danesh.randomwallz.WallBase.ResFilter;
+import org.apache.http.ParseException;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.*;
+import java.net.URL;
 
 public class RandomWallpaper extends IntentService {
 
@@ -24,6 +21,7 @@ public class RandomWallpaper extends IntentService {
     private PreferenceHelper mPrefHelper;
     private WallpaperManager mWallpaperManager;
     private ImageInfo mImageInfo;
+    private DiskLruCache mDiskLruCache;
 
     /**
      * Prevent simultaneous requests
@@ -37,23 +35,19 @@ public class RandomWallpaper extends IntentService {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (!HAS_JOBS) {
+            // Enable disk cache
+            try {
+                File cacheDir = new File(getCacheDir(), "http");
+                mDiskLruCache = DiskLruCache.open(cacheDir, 0, 1, 10l * 1024l * 1024l);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
             sUpdateProgress = intent.hasExtra(WidgetProvider.FORCED_REFRESH);
             TimerUpdate.cancelAllAlarms(this);
             mPrefHelper = new PreferenceHelper(this);
             mWallpaperManager = WallpaperManager.getInstance(this);
             HAS_JOBS = true;
             mImageInfo = new ImageInfo();
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2){
-                try {
-                    File httpCacheDir = new File(getCacheDir(), "http");
-                    long httpCacheSize = 10 * 1024 * 1024;
-                    Class.forName("android.net.http.HttpResponseCache")
-                            .getMethod("install", File.class, long.class)
-                            .invoke(null, httpCacheDir, httpCacheSize);
-                } catch (Exception e ) {
-                    e.printStackTrace();
-                }
-            }
             return super.onStartCommand(intent, flags, startId);
         } else {
             return 0;
@@ -62,15 +56,10 @@ public class RandomWallpaper extends IntentService {
 
     @Override
     public void onDestroy() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2){
+        if (mDiskLruCache != null && !mDiskLruCache.isClosed()) {
             try {
-                Object inst = Class.forName("android.net.http.HttpResponseCache")
-                        .getMethod("getInstalled").invoke(null);
-                if (inst != null) {
-                    Class.forName("android.net.http.HttpResponseCache")
-                            .getMethod("flush").invoke(inst);
-                }
-            } catch (Exception e ) {
+                mDiskLruCache.close();
+            } catch (IOException e) {
                 e.printStackTrace();
             }
         }
@@ -89,16 +78,28 @@ public class RandomWallpaper extends IntentService {
         FileOutputStream cacheBitmapOutputStream = new FileOutputStream(cachedBitmap);
         FileInputStream cacheBitmapInputStream = new FileInputStream(cachedBitmap);
         try {
-            options.inSampleSize = calculateInSampleSize();
 
-            if (!Util.downloadImage(this, url, Util.getWallpaperFile(this), 20, 60)) {
-                mPrefHelper.incFailedAttempts();
-                Util.showToast(this, getString(R.string.unable_set_wallpaper_toast));
-                return;
+            options.inSampleSize = calculateInSampleSize();
+            options.inPreferQualityOverSpeed = true;
+
+            if (mDiskLruCache.get(mImageInfo.id) == null) {
+                final DiskLruCache.Editor editor = mDiskLruCache.edit(mImageInfo.id);
+                OutputStream out = editor.newOutputStream(0);
+                if (!Util.downloadImage(this, url, out, 20, 60)) {
+                    mPrefHelper.incFailedAttempts();
+                    Util.showToast(this, getString(R.string.unable_set_wallpaper_toast));
+                    out.close();
+                    editor.abort();
+                    return;
+                }
+                out.close();
+                editor.commit();
             }
 
-            origBitmap = BitmapFactory.decodeFile(Util.getWallpaperFile(this).toString(), options);
+            InputStream fullSizeImageStream = mDiskLruCache.get(mImageInfo.id).getInputStream(0);
+            origBitmap = BitmapFactory.decodeStream(fullSizeImageStream, null, options);
             origBitmap.compress(Bitmap.CompressFormat.JPEG, 100, cacheBitmapOutputStream);
+            fullSizeImageStream.close();
 
             Util.setWidgetProgress(this, 85);
 

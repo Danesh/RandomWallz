@@ -96,11 +96,10 @@ class Util {
     }
 
     @SuppressWarnings({"BooleanMethodIsAlwaysInverted", "SameParameterValue"})
-    public static boolean downloadImage(Context ctx, URL url, File path,
+    public static boolean downloadImage(Context ctx, URL url, OutputStream out,
             int currentProgress, int allocatedProgress) {
         HttpURLConnection connection = null;
         InputStream in = null;
-        OutputStream out = null;
         try {
             connection  = (HttpURLConnection) url.openConnection();
             int totalLength = connection.getContentLength();
@@ -108,9 +107,6 @@ class Util {
 
             // input stream to read file - with 8k buffer
             in = new BufferedInputStream(connection.getInputStream(), 8192);
-
-            // Output stream to write file
-            out = new FileOutputStream(path);
 
             byte buffer[] = new byte[1024];
             int bytesRead, currentLength = 0, barProgress, lastProgress = 0;
@@ -138,12 +134,6 @@ class Util {
             if (in != null) {
                 try {
                     in.close();
-                } catch (IOException ignored) {
-                }
-            }
-            if (out != null) {
-                try {
-                    out.close();
                 } catch (IOException ignored) {
                 }
             }

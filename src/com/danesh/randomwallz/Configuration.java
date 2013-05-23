@@ -1,13 +1,5 @@
 package com.danesh.randomwallz;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.lang.ref.WeakReference;
-import java.util.Arrays;
-import java.util.Random;
-
 import android.app.Activity;
 import android.app.Dialog;
 import android.app.ProgressDialog;
@@ -25,6 +17,14 @@ import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.Toast;
 import android.widget.ToggleButton;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.lang.ref.WeakReference;
+import java.util.Arrays;
+import java.util.Random;
 
 public class Configuration extends Activity {
 
