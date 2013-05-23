@@ -77,7 +77,7 @@ class Util {
         // Set refresh intent
         Intent intent = new Intent(ctx, RandomWallpaper.class);
         intent.setAction("UPDATE_WIDGET");
-        intent.putExtra(WidgetProvider.FORCED_EXTRA, true);
+        intent.putExtra(WidgetProvider.FORCED_REFRESH, true);
         PendingIntent pendingIntent = PendingIntent.getService(ctx,
                 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
         remoteViews.setOnClickPendingIntent(R.id.refresh, pendingIntent);

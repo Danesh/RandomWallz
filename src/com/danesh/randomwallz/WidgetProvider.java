@@ -1,7 +1,5 @@
 package com.danesh.randomwallz;
 
-import com.danesh.randomwallz.R;
-
 import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProvider;
@@ -11,7 +9,7 @@ import android.widget.RemoteViews;
 
 public class WidgetProvider extends AppWidgetProvider {
 
-    public static final String FORCED_EXTRA = "forced";
+    public static final String FORCED_REFRESH = "forced";
 
     @Override
     public void onUpdate(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {
@@ -19,7 +17,7 @@ public class WidgetProvider extends AppWidgetProvider {
         // Set refresh intent
         Intent intent = new Intent(context, RandomWallpaper.class);
         intent.setAction("UPDATE_WIDGET");
-        intent.putExtra(FORCED_EXTRA, true);
+        intent.putExtra(FORCED_REFRESH, true);
         PendingIntent pendingIntent = PendingIntent.getService(context,
                 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
         remoteViews.setOnClickPendingIntent(R.id.refresh, pendingIntent);

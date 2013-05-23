@@ -1,10 +1,8 @@
 package com.danesh.randomwallz;
 
 import java.io.*;
-import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 
-import android.content.Context;
 import android.os.Build;
 import org.apache.http.ParseException;
 import org.json.JSONArray;
@@ -17,10 +15,8 @@ import android.content.Intent;
 import android.content.SharedPreferences.Editor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.net.http.HttpResponseCache;
 
 import com.danesh.randomwallz.WallBase.ResFilter;
-import com.danesh.randomwallz.WallBase.WallTypes;
 
 public class RandomWallpaper extends IntentService {
 
@@ -41,7 +37,7 @@ public class RandomWallpaper extends IntentService {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (!HAS_JOBS) {
-            sUpdateProgress = intent.hasExtra(WidgetProvider.FORCED_EXTRA);
+            sUpdateProgress = intent.hasExtra(WidgetProvider.FORCED_REFRESH);
             TimerUpdate.cancelAllAlarms(this);
             mPrefHelper = new PreferenceHelper(this);
             mWallpaperManager = WallpaperManager.getInstance(this);
@@ -278,7 +274,7 @@ public class RandomWallpaper extends IntentService {
             Util.showToast(this, getString(R.string.unable_retrieve_wallpaper));
         }
         // Reset the timer if user forced a refresh
-        if (intent.hasExtra(WidgetProvider.FORCED_EXTRA)) {
+        if (intent.hasExtra(WidgetProvider.FORCED_REFRESH)) {
             TimerUpdate.setTimer(this);
         }
         HAS_JOBS = false;
