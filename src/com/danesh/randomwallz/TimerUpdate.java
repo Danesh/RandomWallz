@@ -5,8 +5,11 @@ import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.util.Log;
 
 public class TimerUpdate extends BroadcastReceiver {
+
+    private static final String TAG = "TimerUpdate";
 
     @Override
     public void onReceive(Context context, Intent intent) {
@@ -26,6 +29,7 @@ public class TimerUpdate extends BroadcastReceiver {
                 PendingIntent pIntent = getPendingIntent(ctx);
                 AlarmManager alarmManager = (AlarmManager) ctx.getSystemService(Context.ALARM_SERVICE);
                 alarmManager.setRepeating(AlarmManager.RTC, System.currentTimeMillis() + time, time, pIntent);
+                Log.d(TAG, "Setting alarm for every " + (time / 1000) + " seconds");
             }
         } catch (NumberFormatException e) {
             e.printStackTrace();
@@ -49,5 +53,6 @@ public class TimerUpdate extends BroadcastReceiver {
     static void cancelAllAlarms(Context ctx) {
         AlarmManager alarmManager = (AlarmManager) ctx.getSystemService(Context.ALARM_SERVICE);
         alarmManager.cancel(getPendingIntent(ctx));
+        Log.d(TAG, "Cancelling all alarms");
     }
 }

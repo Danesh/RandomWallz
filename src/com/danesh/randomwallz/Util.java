@@ -70,9 +70,6 @@ class Util {
     }
 
     public static void setWidgetProgress(final Context ctx, final int progress) {
-        if (!RandomWallpaper.sUpdateProgress) {
-            return;
-        }
         RemoteViews remoteViews = new RemoteViews(ctx.getPackageName(), R.layout.widget_layout);
         // Set refresh intent
         Intent intent = new Intent(ctx, RandomWallpaper.class);
@@ -111,11 +108,13 @@ class Util {
             byte buffer[] = new byte[1024];
             int bytesRead, currentLength = 0, barProgress, lastProgress = 0;
             while ((bytesRead = in.read(buffer)) != -1) {
-                currentLength += bytesRead;
-                barProgress = (int) (currentProgress + ((float) currentLength / totalLength) * allocatedProgress);
-                if (barProgress - lastProgress >= 10) {
-                    Util.setWidgetProgress(ctx, barProgress);
-                    lastProgress = barProgress;
+                if (allocatedProgress != 0) {
+                    currentLength += bytesRead;
+                    barProgress = (int) (currentProgress + ((float) currentLength / totalLength) * allocatedProgress);
+                    if (barProgress - lastProgress >= 10) {
+                        Util.setWidgetProgress(ctx, barProgress);
+                        lastProgress = barProgress;
+                    }
                 }
                 // writing buffer to file
                 out.write(buffer, 0, bytesRead);

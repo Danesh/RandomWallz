@@ -260,18 +260,7 @@ public final class WallBase {
 
     public JSONArray query() {
         try {
-            List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(2);
-            nameValuePairs.add(new BasicNameValuePair("query", mSearchTerm));
-            nameValuePairs.add(new BasicNameValuePair("orderby", mOrderBy));
-            nameValuePairs.add(new BasicNameValuePair("orderby_opt", mSortOrder));
-            nameValuePairs.add(new BasicNameValuePair("thpp", mNumberOfResults));
-            nameValuePairs.add(new BasicNameValuePair("res", mResolution));
-            nameValuePairs.add(new BasicNameValuePair("res_opt", mResolutionFilter));
-            nameValuePairs.add(new BasicNameValuePair("board", mWallpaperTypes));
-            //nameValuePairs.add(new BasicNameValuePair("aspect", "1.125"));
-            nameValuePairs.add(new BasicNameValuePair("nsfw", mSafeMode));
-
-            String param = getQuery(nameValuePairs);
+            String param = getQueryString();
             HttpURLConnection conn = (HttpURLConnection) SITE_URL.openConnection();
 
             conn.setDoOutput(true);
@@ -319,5 +308,32 @@ public final class WallBase {
             e.printStackTrace();
         }
         return null;
+    }
+
+    public String getQueryString() {
+        StringBuilder queryStr = new StringBuilder();
+        try {
+            queryStr.append("query=");
+            queryStr.append(URLEncoder.encode(mSearchTerm, "UTF-8")).append("&");
+            queryStr.append("orderby=");
+            queryStr.append(URLEncoder.encode(mOrderBy, "UTF-8")).append("&");
+            queryStr.append("orderby_opt=");
+            queryStr.append(URLEncoder.encode(mSortOrder, "UTF-8")).append("&");
+            queryStr.append("thpp=");
+            queryStr.append(URLEncoder.encode(mNumberOfResults, "UTF-8")).append("&");
+            queryStr.append("res=");
+            queryStr.append(URLEncoder.encode(mResolution, "UTF-8")).append("&");
+            queryStr.append("res_opt=");
+            queryStr.append(URLEncoder.encode(mResolutionFilter, "UTF-8")).append("&");
+            queryStr.append("board=");
+            queryStr.append(URLEncoder.encode(mWallpaperTypes, "UTF-8")).append("&");
+            queryStr.append("nsfw=");
+            queryStr.append(URLEncoder.encode(mSafeMode, "UTF-8"));
+            //queryStr.append("aspect").append("=").append("1.125").append("&");
+            return queryStr.toString();
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+            return "";
+        }
     }
 }
