@@ -108,7 +108,7 @@ public class RandomWallpaper extends IntentService {
                 Log.d(TAG, "Image found in cache");
             }
 
-            Log.d(TAG, "Creating resized image for use as wallpaper");
+            Log.d(TAG, "Creating resized image with sample size : " + options.inSampleSize);
             InputStream fullSizeImageStream = mDiskLruCache.get(mImageInfo.id).getInputStream(0);
             origBitmap = BitmapFactory.decodeStream(fullSizeImageStream, null, options);
             origBitmap.compress(Bitmap.CompressFormat.JPEG, 100, cacheBitmapOutputStream);
@@ -161,59 +161,25 @@ public class RandomWallpaper extends IntentService {
     }
 
     /**
-     * Scales one side of a rectangle to fit aspect ratio.
-     *
-     * @param maxPrimary Maximum size of the primary dimension (i.e. width for
-     *        max width), or zero to maintain aspect ratio with secondary
-     *        dimension
-     * @param maxSecondary Maximum size of the secondary dimension, or zero to
-     *        maintain aspect ratio with primary dimension
-     * @param actualPrimary Actual size of the primary dimension
-     * @param actualSecondary Actual size of the secondary dimension
-     */
-    private static int getResizedDimension(int maxPrimary, int maxSecondary, int actualPrimary,
-                                           int actualSecondary) {
-        // If no dominant value at all, just return the actual.
-        if (maxPrimary == 0 && maxSecondary == 0) {
-            return actualPrimary;
-        }
-
-        // If primary is unspecified, scale primary to match secondary's scaling ratio.
-        if (maxPrimary == 0) {
-            double ratio = (double) maxSecondary / (double) actualSecondary;
-            return (int) (actualPrimary * ratio);
-        }
-
-        if (maxSecondary == 0) {
-            return maxPrimary;
-        }
-
-        double ratio = (double) actualSecondary / (double) actualPrimary;
-        int resized = maxPrimary;
-        if (resized * ratio > maxSecondary) {
-            resized = (int) (maxSecondary / ratio);
-        }
-        return resized;
-    }
-
-    /**
      * Calculates inSampleSize value based on bitmap height/width and required
      * width/height of wallpaper manager.
      * @return an integer for the inSampleSize property of BitmapOptions
      */
     int calculateInSampleSize() {
-        int desiredWidth = getResizedDimension(mWallpaperManager.getDesiredMinimumWidth(),
-                mWallpaperManager.getDesiredMinimumHeight(), mImageInfo.width, mImageInfo.height);
-        int desiredHeight = getResizedDimension(mWallpaperManager.getDesiredMinimumHeight(),
-                mWallpaperManager.getDesiredMinimumWidth(), mImageInfo.height, mImageInfo.width);
-        double wr = (double) mImageInfo.width / desiredWidth;
-        double hr = (double) mImageInfo.height / desiredHeight;
-        double ratio = Math.min(wr, hr);
-        float n = 1.0f;
-        while ((n * 2) <= ratio) {
-            n *= 2;
+        int maxWidth = mWallpaperManager.getDesiredMinimumWidth();
+        int maxHeight = mWallpaperManager.getDesiredMinimumHeight();
+        // Give maxWidth and maxHeight some leeway
+        maxWidth *= 1.25;
+        maxHeight *= 1.25;
+        int bmWidth = mImageInfo.width;
+        int bmHeight = mImageInfo.height;
+        int scale = 1;
+        while (bmWidth > maxWidth || bmHeight > maxHeight) {
+            scale <<= 1;
+            bmWidth >>= 1;
+            bmHeight >>= 1;
         }
-        return (int) n;
+        return scale;
     }
 
     @Override
