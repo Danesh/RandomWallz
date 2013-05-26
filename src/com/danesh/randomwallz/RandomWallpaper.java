@@ -182,6 +182,33 @@ public class RandomWallpaper extends IntentService {
         return scale;
     }
 
+    /**
+     * Filters query results into properties we are interested in
+     * This aids in a smaller on-disk file and in memory json object
+     * @param array
+     * @return
+     */
+    private static JSONArray filterResults(JSONArray array) {
+        JSONArray result = new JSONArray();
+        for (int i = 0; i < array.length(); i++) {
+            try {
+                JSONObject selectedObj = array.getJSONObject(i);
+                JSONObject newObj = new JSONObject();
+                newObj.put("id", selectedObj.getInt("id"));
+                newObj.put("url", selectedObj.getString("url"));
+                JSONObject selectedAttrs = selectedObj.getJSONObject("attrs");
+                JSONObject newAttrs = new JSONObject();
+                newAttrs.put("wall_h", selectedAttrs.getInt("wall_h"));
+                newAttrs.put("wall_w", selectedAttrs.getInt("wall_w"));
+                newObj.put("attrs", newAttrs);
+                result.put(newObj);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+        return result;
+    }
+
     @Override
     protected void onHandleIntent(Intent intent) {
         if (Util.isNetworkAvailable(this)) {
@@ -215,7 +242,7 @@ public class RandomWallpaper extends IntentService {
                     if (jsonResponse != null) {
                         storedCache = new JSONObject();
                         storedCache.put("index", 0);
-                        storedCache.put("results", jsonResponse);
+                        storedCache.put("results", filterResults(jsonResponse));
                         mPrefHelper.resetFailedAttempts();
                         index = 0;
                     }
