@@ -4,7 +4,7 @@
     <string name="timer_dialog_title">Wallpaper change interval</string>
     <string name="configuration_dialog_title">Configuration</string>
     <string name="search_empty_error">Search term cannot be empty</string>
-    <string name="image_saved_toast">Image saved</string>
+    <string name="image_saved_toast">Image saved to </string>
     <string name="image_not_saved_toast">Image not saved</string>
     <string name="safe_mode_label">Safe mode</string>
     <string name="search_term_hint_label">Search :</string>

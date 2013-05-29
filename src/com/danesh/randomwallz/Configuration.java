@@ -131,6 +131,7 @@ public class Configuration extends Activity {
                         @Override
                         public void run() {
                             boolean wasSuccessful = false;
+                            String fullPath = "/sdcard/";
                             if (mConfiguration.get() != null && Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
                                 Context context = mConfiguration.get().getBaseContext();
                                 String folder = Environment.getExternalStorageDirectory() + "/" + FOLDER_NAME;
@@ -142,7 +143,7 @@ public class Configuration extends Activity {
                                     while (lastId.isEmpty() && new File(newFileName).exists()) {
                                         newFileName = String.format(FILE_BASE_NAME, lastId.isEmpty() ? new Random().nextInt(Integer.MAX_VALUE) : lastId);
                                     }
-                                    String fullPath = rootFolder + "/" + newFileName;
+                                    fullPath = rootFolder + "/" + newFileName;
                                     if (prefHelper.getWallpaperChanged()) {
                                         File srcFile = new File(context.getCacheDir(), "http/" + prefHelper.getLastWallpaperId() + ".0");
                                         wasSuccessful = Util.copyFile(srcFile, new File(fullPath));
@@ -167,6 +168,7 @@ public class Configuration extends Activity {
                             }
                             Message msg = Message.obtain();
                             msg.arg1 = wasSuccessful ? SAVE_WALLPAPER_SUCCESS : SAVE_WALLPAPER_FAILURE;
+                            msg.obj = fullPath;
                             msg.what = SAVE_WALLPAPER_PROCESSED;
                             sendMessage(msg);
                         }
@@ -176,7 +178,9 @@ public class Configuration extends Activity {
                     if (mConfiguration.get() != null) {
                         Context context = mConfiguration.get().getBaseContext();
                         if (msg.arg1 == SAVE_WALLPAPER_SUCCESS) {
-                            Toast.makeText(context, R.string.image_saved_toast, Toast.LENGTH_SHORT).show();
+                            String savedToast = context.getResources().getString(R.string.image_saved_toast);
+                            savedToast += msg.obj;
+                            Toast.makeText(context, savedToast, Toast.LENGTH_SHORT).show();
                         } else {
                             Toast.makeText(context, R.string.image_not_saved_toast, Toast.LENGTH_SHORT).show();
                         }
