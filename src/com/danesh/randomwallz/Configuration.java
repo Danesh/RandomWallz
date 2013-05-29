@@ -80,6 +80,7 @@ public class Configuration extends Activity {
     /**
      * Dialog cancel button
      * Just finish the activity
+     *
      * @param v
      */
     public void cancel(View v) {
@@ -89,6 +90,7 @@ public class Configuration extends Activity {
     /**
      * Dialog save button
      * Clears cache if search term or safe mode was changed
+     *
      * @param v
      */
     public void save(View v) {
@@ -123,70 +125,71 @@ public class Configuration extends Activity {
         @Override
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
-            switch(msg.what) {
-            case SAVE_WALLPAPER:
-                new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        boolean wasSuccessful = false;
-                        if (mConfiguration.get() != null && Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
-                            Context context = mConfiguration.get().getBaseContext();
-                            String folder = Environment.getExternalStorageDirectory() + "/" + FOLDER_NAME;
-                            File rootFolder = new File(folder);
-                            if (rootFolder.isDirectory() || rootFolder.mkdir()) {
-                                String lastId = new PreferenceHelper(context).getLastWallpaperId();
-                                String newFileName = String.format(FILE_BASE_NAME, lastId.isEmpty() ? new Random().nextInt(Integer.MAX_VALUE) : lastId);
-                                while (lastId.isEmpty() && new File(newFileName).exists()) {
-                                    newFileName = String.format(FILE_BASE_NAME, lastId.isEmpty() ? new Random().nextInt(Integer.MAX_VALUE) : lastId);
-                                }
-                                String fullPath = rootFolder + "/" + newFileName;
-                                File wallpaperFile = Util.getWallpaperFile(context);
-                                if (wallpaperFile.exists()) {
-                                    wasSuccessful = Util.copyFile(wallpaperFile, new File(fullPath));
-                                } else {
-                                    BitmapDrawable curWallpaper = (BitmapDrawable) WallpaperManager.getInstance(context).getDrawable();
-                                    FileOutputStream saveImg = null;
-                                    try {
-                                        saveImg = new FileOutputStream(new File(fullPath));
-                                        curWallpaper.getBitmap().compress(Bitmap.CompressFormat.JPEG, 100, saveImg);
-                                        wasSuccessful = true;
-                                    } catch (FileNotFoundException e) {
-                                        e.printStackTrace();
-                                    } finally {
+            switch (msg.what) {
+                case SAVE_WALLPAPER:
+                    new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            boolean wasSuccessful = false;
+                            if (mConfiguration.get() != null && Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
+                                Context context = mConfiguration.get().getBaseContext();
+                                String folder = Environment.getExternalStorageDirectory() + "/" + FOLDER_NAME;
+                                File rootFolder = new File(folder);
+                                if (rootFolder.isDirectory() || rootFolder.mkdir()) {
+                                    String lastId = new PreferenceHelper(context).getLastWallpaperId();
+                                    String newFileName = String.format(FILE_BASE_NAME, lastId.isEmpty() ? new Random().nextInt(Integer.MAX_VALUE) : lastId);
+                                    while (lastId.isEmpty() && new File(newFileName).exists()) {
+                                        newFileName = String.format(FILE_BASE_NAME, lastId.isEmpty() ? new Random().nextInt(Integer.MAX_VALUE) : lastId);
+                                    }
+                                    String fullPath = rootFolder + "/" + newFileName;
+                                    File wallpaperFile = Util.getWallpaperFile(context);
+                                    if (wallpaperFile.exists()) {
+                                        wasSuccessful = Util.copyFile(wallpaperFile, new File(fullPath));
+                                    } else {
+                                        BitmapDrawable curWallpaper = (BitmapDrawable) WallpaperManager.getInstance(context).getDrawable();
+                                        FileOutputStream saveImg = null;
                                         try {
-                                            saveImg.close();
-                                        } catch (IOException e) {
+                                            saveImg = new FileOutputStream(new File(fullPath));
+                                            curWallpaper.getBitmap().compress(Bitmap.CompressFormat.JPEG, 100, saveImg);
+                                            wasSuccessful = true;
+                                        } catch (FileNotFoundException e) {
                                             e.printStackTrace();
+                                        } finally {
+                                            try {
+                                                saveImg.close();
+                                            } catch (IOException e) {
+                                                e.printStackTrace();
+                                            }
                                         }
                                     }
                                 }
                             }
+                            Message msg = Message.obtain();
+                            msg.arg1 = wasSuccessful ? SAVE_WALLPAPER_SUCCESS : SAVE_WALLPAPER_FAILURE;
+                            msg.what = SAVE_WALLPAPER_PROCESSED;
+                            sendMessage(msg);
                         }
-                        Message msg = Message.obtain();
-                        msg.arg1 = wasSuccessful ? SAVE_WALLPAPER_SUCCESS : SAVE_WALLPAPER_FAILURE;
-                        msg.what = SAVE_WALLPAPER_PROCESSED;
-                        sendMessage(msg);
+                    }).start();
+                    break;
+                case SAVE_WALLPAPER_PROCESSED:
+                    if (mConfiguration.get() != null) {
+                        Context context = mConfiguration.get().getBaseContext();
+                        if (msg.arg1 == SAVE_WALLPAPER_SUCCESS) {
+                            Toast.makeText(context, R.string.image_saved_toast, Toast.LENGTH_SHORT).show();
+                        } else {
+                            Toast.makeText(context, R.string.image_not_saved_toast, Toast.LENGTH_SHORT).show();
+                        }
+                        mConfiguration.get().mProgressDialog.dismiss();
+                        mConfiguration.get().mProgressDialog = null;
                     }
-                }).start();
-                break;
-            case SAVE_WALLPAPER_PROCESSED:
-                if (mConfiguration.get() != null) {
-                    Context context = mConfiguration.get().getBaseContext();
-                    if (msg.arg1 == SAVE_WALLPAPER_SUCCESS) {
-                        Toast.makeText(context, R.string.image_saved_toast, Toast.LENGTH_SHORT).show();
-                    } else {
-                        Toast.makeText(context, R.string.image_not_saved_toast, Toast.LENGTH_SHORT).show();
-                    }
-                    mConfiguration.get().mProgressDialog.dismiss();
-                    mConfiguration.get().mProgressDialog = null;
-                }
-                break;
+                    break;
             }
         }
     }
 
     /**
      * Dialog save wallpaper button
+     *
      * @param v
      */
     public void saveWallpaper(View v) {

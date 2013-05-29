@@ -79,6 +79,7 @@ public class RandomWallpaper extends IntentService {
 
     /**
      * Given a URL, sets the wallpaper to the image it points to.
+     *
      * @param url - url to wallpaper
      * @throws IOException
      */
@@ -148,10 +149,10 @@ public class RandomWallpaper extends IntentService {
             }
             // Helps to reclaim bitmap memory in preparation for next cycle.
             System.gc();
-            if(cacheBitmapInputStream != null) {
+            if (cacheBitmapInputStream != null) {
                 cacheBitmapInputStream.close();
             }
-            if(cacheBitmapOutputStream != null) {
+            if (cacheBitmapOutputStream != null) {
                 cacheBitmapOutputStream.close();
             }
             if (cachedBitmap.exists()) {
@@ -163,6 +164,7 @@ public class RandomWallpaper extends IntentService {
     /**
      * Calculates inSampleSize value based on bitmap height/width and required
      * width/height of wallpaper manager.
+     *
      * @return an integer for the inSampleSize property of BitmapOptions
      */
     int calculateInSampleSize() {
@@ -185,6 +187,7 @@ public class RandomWallpaper extends IntentService {
     /**
      * Filters query results into properties we are interested in
      * This aids in a smaller on-disk file and in memory json object
+     *
      * @param array
      * @return
      */
@@ -269,7 +272,7 @@ public class RandomWallpaper extends IntentService {
 
                     try {
                         setUrlWallpaper(new URL(selectedImage.getString("url")));
-                    } catch (IOException e){
+                    } catch (IOException e) {
                         e.printStackTrace();
                     }
                 }

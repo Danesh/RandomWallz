@@ -18,6 +18,7 @@ public class TimerUpdate extends BroadcastReceiver {
 
     /**
      * Sets the timer according to timerinterval configured by user
+     *
      * @param ctx
      */
     static void setTimer(Context ctx) {
@@ -38,6 +39,7 @@ public class TimerUpdate extends BroadcastReceiver {
 
     /**
      * Returns the pending intent used to refresh wallpaper on intervals
+     *
      * @param ctx
      * @return
      */
@@ -48,6 +50,7 @@ public class TimerUpdate extends BroadcastReceiver {
 
     /**
      * Cancel all pending alarms
+     *
      * @param ctx
      */
     static void cancelAllAlarms(Context ctx) {

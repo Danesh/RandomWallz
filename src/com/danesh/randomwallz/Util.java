@@ -39,10 +39,10 @@ class Util {
         StringBuilder result = new StringBuilder();
         try {
             BufferedReader reader = new BufferedReader(new FileReader(getCacheFile(ctx)));
-            String s; 
-            while((s = reader.readLine()) != null) { 
-                result.append(s); 
-            } 
+            String s;
+            while ((s = reader.readLine()) != null) {
+                result.append(s);
+            }
             reader.close();
             return new JSONObject(result.toString());
         } catch (IOException e) {
@@ -55,7 +55,7 @@ class Util {
 
     public static boolean isNetworkAvailable(Context ctx) {
         ConnectivityManager connectivityManager =
-            (ConnectivityManager) ctx.getSystemService(Context.CONNECTIVITY_SERVICE);
+                (ConnectivityManager) ctx.getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
         return activeNetworkInfo != null && activeNetworkInfo.isConnected();
     }
@@ -66,7 +66,7 @@ class Util {
             public void run() {
                 Toast.makeText(ctx, msg, Toast.LENGTH_SHORT).show();
             }
-        });        
+        });
     }
 
     public static void setWidgetProgress(final Context ctx, final int progress) {
@@ -89,16 +89,16 @@ class Util {
     }
 
     public static File getWallpaperFile(Context ctx) {
-        return new File(ctx.getFilesDir(),"wallpaper");
+        return new File(ctx.getFilesDir(), "wallpaper");
     }
 
     @SuppressWarnings({"BooleanMethodIsAlwaysInverted", "SameParameterValue"})
     public static boolean downloadImage(Context ctx, URL url, OutputStream out,
-            int currentProgress, int allocatedProgress) {
+                                        int currentProgress, int allocatedProgress) {
         HttpURLConnection connection = null;
         InputStream in = null;
         try {
-            connection  = (HttpURLConnection) url.openConnection();
+            connection = (HttpURLConnection) url.openConnection();
             int totalLength = connection.getContentLength();
             connection.connect();
 

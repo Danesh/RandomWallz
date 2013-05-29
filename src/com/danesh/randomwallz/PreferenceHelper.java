@@ -16,7 +16,7 @@ class PreferenceHelper {
     private static final String DEFAULT_TIMER_INTERVAL = "0";
     private static final String FAILED_ATTEMPTS = "failed_attempts";
     static final String WALLPAPER_CHANGED = "wallpaper_changed";
-    
+
     private final SharedPreferences mSharedPreferences;
 
     PreferenceHelper(Context ctx) {
@@ -42,15 +42,15 @@ class PreferenceHelper {
     public String getTimerInterval() {
         return mSharedPreferences.getString(TIMER_INTERVAL, DEFAULT_TIMER_INTERVAL);
     }
-    
+
     public int getFailedAttempts() {
         return mSharedPreferences.getInt(FAILED_ATTEMPTS, 0);
     }
-    
+
     public void incFailedAttempts() {
         mSharedPreferences.edit().putInt(FAILED_ATTEMPTS, getFailedAttempts() + 1).apply();
     }
-    
+
     public void resetFailedAttempts() {
         mSharedPreferences.edit().putInt(FAILED_ATTEMPTS, 0).apply();
     }
