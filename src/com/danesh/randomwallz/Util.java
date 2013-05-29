@@ -70,13 +70,14 @@ class Util {
     }
 
     public static void setWidgetProgress(final Context ctx, final int progress) {
-        RemoteViews remoteViews = new RemoteViews(ctx.getPackageName(), R.layout.widget_layout);
         // Set refresh intent
         Intent intent = new Intent(ctx, RandomWallpaper.class);
+        //Action is needed for extra's to be preserved
         intent.setAction("UPDATE_WIDGET");
         intent.putExtra(WidgetProvider.FORCED_REFRESH, true);
         PendingIntent pendingIntent = PendingIntent.getService(ctx,
                 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        RemoteViews remoteViews = new RemoteViews(ctx.getPackageName(), R.layout.widget_layout);
         remoteViews.setOnClickPendingIntent(R.id.refresh, pendingIntent);
         // Set configuration intent
         intent = new Intent(ctx, Configuration.class);
@@ -86,10 +87,6 @@ class Util {
         remoteViews.setProgressBar(R.id.progress, 100, progress, false);
         ComponentName comp = new ComponentName(ctx, WidgetProvider.class);
         AppWidgetManager.getInstance(ctx).updateAppWidget(comp, remoteViews);
-    }
-
-    public static File getWallpaperFile(Context ctx) {
-        return new File(ctx.getFilesDir(), "wallpaper");
     }
 
     @SuppressWarnings({"BooleanMethodIsAlwaysInverted", "SameParameterValue"})

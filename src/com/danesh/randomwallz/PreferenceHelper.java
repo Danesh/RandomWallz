@@ -15,6 +15,7 @@ class PreferenceHelper {
     static final String TIMER_INTERVAL = "pref_timer_interval";
     private static final String DEFAULT_TIMER_INTERVAL = "0";
     private static final String FAILED_ATTEMPTS = "failed_attempts";
+    static final String WALLPAPER_CHANGED_TIME = "wallpaper_changed_time";
     static final String WALLPAPER_CHANGED = "wallpaper_changed";
 
     private final SharedPreferences mSharedPreferences;
@@ -55,7 +56,11 @@ class PreferenceHelper {
         mSharedPreferences.edit().putInt(FAILED_ATTEMPTS, 0).apply();
     }
 
-    public long getWallpaperChanged() {
-        return mSharedPreferences.getLong(WALLPAPER_CHANGED, 0);
+    public long getWallpaperChangedTime() {
+        return mSharedPreferences.getLong(WALLPAPER_CHANGED_TIME, 0);
+    }
+
+    public boolean getWallpaperChanged() {
+        return mSharedPreferences.getBoolean(WALLPAPER_CHANGED, false);
     }
 }

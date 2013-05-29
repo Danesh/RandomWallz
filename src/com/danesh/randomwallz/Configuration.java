@@ -136,15 +136,16 @@ public class Configuration extends Activity {
                                 String folder = Environment.getExternalStorageDirectory() + "/" + FOLDER_NAME;
                                 File rootFolder = new File(folder);
                                 if (rootFolder.isDirectory() || rootFolder.mkdir()) {
-                                    String lastId = new PreferenceHelper(context).getLastWallpaperId();
+                                    PreferenceHelper prefHelper = new PreferenceHelper(context);
+                                    String lastId = prefHelper.getLastWallpaperId();
                                     String newFileName = String.format(FILE_BASE_NAME, lastId.isEmpty() ? new Random().nextInt(Integer.MAX_VALUE) : lastId);
                                     while (lastId.isEmpty() && new File(newFileName).exists()) {
                                         newFileName = String.format(FILE_BASE_NAME, lastId.isEmpty() ? new Random().nextInt(Integer.MAX_VALUE) : lastId);
                                     }
                                     String fullPath = rootFolder + "/" + newFileName;
-                                    File wallpaperFile = Util.getWallpaperFile(context);
-                                    if (wallpaperFile.exists()) {
-                                        wasSuccessful = Util.copyFile(wallpaperFile, new File(fullPath));
+                                    if (prefHelper.getWallpaperChanged()) {
+                                        File srcFile = new File(context.getCacheDir(), "http/" + prefHelper.getLastWallpaperId() + ".0");
+                                        wasSuccessful = Util.copyFile(srcFile, new File(fullPath));
                                     } else {
                                         BitmapDrawable curWallpaper = (BitmapDrawable) WallpaperManager.getInstance(context).getDrawable();
                                         FileOutputStream saveImg = null;

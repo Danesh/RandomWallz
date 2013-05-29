@@ -6,6 +6,8 @@ import android.content.Intent;
 import android.content.SharedPreferences.Editor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import com.danesh.randomwallz.WallBase.ResFilter;
 import org.apache.http.ParseException;
@@ -126,7 +128,7 @@ public class RandomWallpaper extends IntentService {
 
                 Log.d(TAG, "Setting wallpaper");
 
-                Editor edit = mPrefHelper.getEditor();
+                final Editor edit = mPrefHelper.getEditor();
 
                 // Save wallpaper id. Used for filename when saving wallpaper
                 edit.putString(PreferenceHelper.LAST_ID, mImageInfo.id);
@@ -135,13 +137,20 @@ public class RandomWallpaper extends IntentService {
                 edit.putString(Configuration.LAST_URL, url.toString());
 
                 // Sets the time of when we changed the wallpaper
-                edit.putLong(PreferenceHelper.WALLPAPER_CHANGED, System.currentTimeMillis());
+                edit.putLong(PreferenceHelper.WALLPAPER_CHANGED_TIME, System.currentTimeMillis());
 
                 edit.apply();
 
                 if (mForcedRefresh) {
                     Util.setWidgetProgress(this, 95);
                 }
+
+                new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        edit.putBoolean(PreferenceHelper.WALLPAPER_CHANGED, true).apply();
+                    }
+                }, 1000);
             }
         } finally {
             if (origBitmap != null) {
