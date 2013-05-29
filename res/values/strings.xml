@@ -8,7 +8,7 @@
     <string name="image_not_saved_toast">Image not saved</string>
     <string name="save_wallpaper_label">Save current wallpaper</string>
     <string name="safe_mode_label">Safe mode</string>
-    <string name="search_term_hint_label">Search term</string>
+    <string name="search_term_hint_label">Search :</string>
     <string name="cancel_label">Cancel</string>
     <string name="save_label">Save</string>
     <string name="refresh_content_description">Refresh</string>

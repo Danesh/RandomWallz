@@ -1,47 +1,61 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical" >
+              xmlns:tools="http://schemas.android.com/tools"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:orientation="vertical"
+              android:layout_marginLeft="5dp"
+              android:layout_marginRight="5dp"
+              tools:context=".Configuration">
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="45dp"
+        android:layout_marginTop="2dp">
+
+        <EditText
+            android:id="@+id/search_term"
+            android:layout_width="match_parent"
+            android:paddingLeft="75dp"
+            android:layout_height="match_parent"
+            android:maxLines="1"
+            android:textSize="17sp">
+
+            <requestFocus/>
+        </EditText>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:gravity="center_vertical"
+            android:paddingLeft="10dp"
+            android:textSize="17sp"
+            android:text="@string/search_term_hint_label"/>
+
+    </FrameLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="2dp"
-        android:orientation="horizontal" >
+        android:layout_marginTop="2dp"
+        android:layout_marginBottom="2dp"
+        android:orientation="horizontal">
 
-        <EditText
-            android:id="@+id/search_term"
-            android:layout_width="0dp"
+        <ImageButton
+            android:id="@+id/save_wallpaper"
+            android:layout_width="wrap_content"
             android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:ems="10"
-            android:hint="@string/search_term_hint_label" >
-        </EditText>
+            android:onClick="saveWallpaper"
+            android:singleLine="true"
+            android:src="@drawable/content_save"
+            android:textSize="14sp"/>
 
         <ToggleButton
             android:id="@+id/safe_mode"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:textOff="@string/safe_mode_label"
-            android:textOn="@string/safe_mode_label" />
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="5dp"
-        android:layout_marginTop="5dp"
-        android:orientation="horizontal" >
-
-        <Button
-            android:id="@+id/save_wallpaper"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:onClick="saveWallpaper"
-            android:singleLine="true"
-            android:text="@string/save_wallpaper_label"
-            android:textSize="14sp" />
+            android:textOn="@string/safe_mode_label"/>
 
         <Spinner
             android:id="@+id/timer_interval"
@@ -51,13 +65,13 @@
             android:entries="@array/timer_entries"
             android:entryValues="@array/timer_values"
             android:prompt="@string/timer_dialog_title"
-            android:spinnerMode="dialog" />
+            android:spinnerMode="dialog"/>
     </LinearLayout>
 
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:background="#484848" />
+        android:background="#484848"/>
 
     <LinearLayout
         style="?buttonBarStyle"
@@ -65,7 +79,7 @@
         android:layout_height="0dp"
         android:layout_weight="1"
         android:gravity="bottom"
-        android:orientation="horizontal" >
+        android:orientation="horizontal">
 
         <Button
             android:id="@+id/cancel"
@@ -74,7 +88,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="0.5"
             android:onClick="cancel"
-            android:text="@string/cancel_label" />
+            android:text="@string/cancel_label"/>
 
         <Button
             android:id="@+id/save"
@@ -83,7 +97,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="0.5"
             android:onClick="save"
-            android:text="@string/save_label" />
+            android:text="@string/save_label"/>
     </LinearLayout>
 
 </LinearLayout>
