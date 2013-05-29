@@ -19,6 +19,7 @@
             android:paddingLeft="75dp"
             android:layout_height="match_parent"
             android:maxLines="1"
+            android:inputType="text"
             android:textSize="17sp">
 
             <requestFocus/>
