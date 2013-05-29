@@ -1,12 +1,13 @@
 package com.danesh.randomwallz;
 
-import android.app.IntentService;
+import android.app.Service;
 import android.app.WallpaperManager;
 import android.content.Intent;
 import android.content.SharedPreferences.Editor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Handler;
+import android.os.IBinder;
 import android.os.Looper;
 import android.util.Log;
 import com.danesh.randomwallz.WallBase.ResFilter;
@@ -17,58 +18,83 @@ import org.json.JSONObject;
 
 import java.io.*;
 import java.net.URL;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
-public class RandomWallpaper extends IntentService {
+public class RandomWallpaper extends Service {
 
     private static final String TAG = "RandomWallpaper";
     private PreferenceHelper mPrefHelper;
     private WallpaperManager mWallpaperManager;
-    private final ImageInfo mImageInfo;
     private DiskLruCache mDiskLruCache;
+
+    /**
+     * Holds information regarding current image
+     */
+    private ImageInfo mImageInfo;
 
     /**
      * Whether we were invoked via refresh button or a timer event.
      */
     private boolean mForcedRefresh;
 
-    /**
-     * Prevent simultaneous requests
-     */
-    private boolean mHasJobs;
-
-    public RandomWallpaper() {
-        super(TAG);
-        mImageInfo = new ImageInfo();
-    }
+    private ThreadPoolExecutor mExecutor;
 
     @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
-        if (!mHasJobs) {
+    public void onCreate() {
+        super.onCreate();
+
+        //Initialize instances
+        mImageInfo = new ImageInfo();
+        mExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(1);
+        mPrefHelper = new PreferenceHelper(this);
+        mWallpaperManager = WallpaperManager.getInstance(this);
+
+        try {
             // Enable disk cache
-            try {
-                File cacheDir = new File(getCacheDir(), "http");
-                mDiskLruCache = DiskLruCache.open(cacheDir, 0, 1, 10l * 1024l * 1024l);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-            mForcedRefresh = intent.hasExtra(WidgetProvider.FORCED_REFRESH);
-            if (mForcedRefresh) {
-                TimerUpdate.cancelAllAlarms(this);
-            }
-
-            mPrefHelper = new PreferenceHelper(this);
-            mWallpaperManager = WallpaperManager.getInstance(this);
-            mHasJobs = true;
-            return super.onStartCommand(intent, flags, startId);
-        } else {
-            Log.d(TAG, "Rejecting request");
-            return 0;
+            File cacheDir = new File(getCacheDir(), "http");
+            mDiskLruCache = DiskLruCache.open(cacheDir, 0, 1, 10l * 1024l * 1024l);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
     @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        if (mExecutor.getActiveCount() != 0) {
+            Log.d(TAG, "Cancelling request");
+            mExecutor.shutdownNow();
+            try {
+                mExecutor.awaitTermination(2, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } finally {
+                if (mForcedRefresh) {
+                    TimerUpdate.setTimer(this);
+                }
+                stopSelf();
+            }
+        } else {
+            Log.d(TAG, "Processing request");
+            mForcedRefresh = intent.hasExtra(WidgetProvider.FORCED_REFRESH);
+            if (mForcedRefresh) {
+                TimerUpdate.cancelAllAlarms(this);
+            }
+            mExecutor.submit(new Runnable() {
+                @Override
+                public void run() {
+                    processRequest();
+                    stopSelf();
+                }
+            });
+        }
+        return START_NOT_STICKY;
+    }
+
+    @Override
     public void onDestroy() {
+        Log.d(TAG, "Shutting down thread");
         if (mDiskLruCache != null && !mDiskLruCache.isClosed()) {
             try {
                 mDiskLruCache.close();
@@ -77,6 +103,11 @@ public class RandomWallpaper extends IntentService {
             }
         }
         super.onDestroy();
+    }
+
+    @Override
+    public IBinder onBind(Intent intent) {
+        return null;
     }
 
     /**
@@ -88,19 +119,23 @@ public class RandomWallpaper extends IntentService {
     private void setUrlWallpaper(URL url) throws IOException {
         Bitmap origBitmap = null;
         BitmapFactory.Options options = new BitmapFactory.Options();
-        File cachedBitmap = new File(getExternalCacheDir(), "wallpaper");
-        FileOutputStream cacheBitmapOutputStream = new FileOutputStream(cachedBitmap);
-        FileInputStream cacheBitmapInputStream = new FileInputStream(cachedBitmap);
+        File cacheResizedBitmap = new File(getExternalCacheDir(), "wallpaper");
+        FileOutputStream cacheBitmapOutputStream = new FileOutputStream(cacheResizedBitmap);
+        FileInputStream cacheBitmapInputStream = new FileInputStream(cacheResizedBitmap);
         try {
+            //Reduce bitmap dimensions closest to preferred wallpaper dimensions
             options.inSampleSize = calculateInSampleSize();
 
+            //Check if image is found in cache
             if (mDiskLruCache.get(mImageInfo.id) == null) {
                 final DiskLruCache.Editor editor = mDiskLruCache.edit(mImageInfo.id);
                 OutputStream out = editor.newOutputStream(0);
                 Log.d(TAG, "Fetching image : " + url.toString());
-                if (!Util.downloadImage(this, url, out, 20, mForcedRefresh ? 60 : 0)) {
-                    mPrefHelper.incFailedAttempts();
-                    Util.showToast(this, getString(R.string.unable_set_wallpaper_toast));
+                if (!Util.downloadImage(this, url, out, 20, 60)) {
+                    if (!Thread.interrupted()) {
+                        mPrefHelper.incFailedAttempts();
+                        Util.showToast(this, getString(R.string.unable_retrieve_wallpaper));
+                    }
                     out.close();
                     editor.abort();
                     return;
@@ -111,22 +146,21 @@ public class RandomWallpaper extends IntentService {
                 Log.d(TAG, "Image found in cache");
             }
 
+            //Save resized version of image to temporary cache
             Log.d(TAG, "Creating resized image with sample size : " + options.inSampleSize);
             InputStream fullSizeImageStream = mDiskLruCache.get(mImageInfo.id).getInputStream(0);
             origBitmap = BitmapFactory.decodeStream(fullSizeImageStream, null, options);
             origBitmap.compress(Bitmap.CompressFormat.JPEG, 100, cacheBitmapOutputStream);
             fullSizeImageStream.close();
 
-            if (mForcedRefresh) {
-                Util.setWidgetProgress(this, 85);
-            }
+            Util.setWidgetProgress(this, 85);
 
             if (origBitmap == null) {
                 Util.showToast(this, getString(R.string.unable_retrieve_wallpaper));
             } else {
-                mWallpaperManager.setStream(cacheBitmapInputStream);
 
                 Log.d(TAG, "Setting wallpaper");
+                mWallpaperManager.setStream(cacheBitmapInputStream);
 
                 final Editor edit = mPrefHelper.getEditor();
 
@@ -141,10 +175,10 @@ public class RandomWallpaper extends IntentService {
 
                 edit.apply();
 
-                if (mForcedRefresh) {
-                    Util.setWidgetProgress(this, 95);
-                }
+                Util.setWidgetProgress(this, 95);
 
+                //Differentiate between wallpapers set by our app and those set
+                //by 3rd party apps.
                 new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
                     @Override
                     public void run() {
@@ -156,16 +190,14 @@ public class RandomWallpaper extends IntentService {
             if (origBitmap != null) {
                 origBitmap.recycle();
             }
-            // Helps to reclaim bitmap memory in preparation for next cycle.
-            System.gc();
             if (cacheBitmapInputStream != null) {
                 cacheBitmapInputStream.close();
             }
             if (cacheBitmapOutputStream != null) {
                 cacheBitmapOutputStream.close();
             }
-            if (cachedBitmap.exists()) {
-                cachedBitmap.delete();
+            if (cacheResizedBitmap.exists()) {
+                cacheResizedBitmap.delete();
             }
         }
     }
@@ -221,23 +253,19 @@ public class RandomWallpaper extends IntentService {
         return result;
     }
 
-    @Override
-    protected void onHandleIntent(Intent intent) {
+    protected void processRequest() {
         if (Util.isNetworkAvailable(this)) {
             JSONObject storedCache = null;
             JSONArray jsonResponse = null;
             int index = 0;
-            if (mForcedRefresh) {
-                Util.setWidgetProgress(this, 5);
-            }
+            Util.setWidgetProgress(this, 5);
             try {
-                // Check if cached urls exist
+                //Check if cached results exist and number of failed attempts at retrieving
+                //a result has been less than 2
                 if (Util.getCacheFile(this).exists() && mPrefHelper.getFailedAttempts() < 2) {
                     storedCache = Util.readCacheResults(this);
-                    if (storedCache.has("index")) {
+                    if (storedCache.has("index") && storedCache.has("results")) {
                         index = storedCache.getInt("index");
-                    }
-                    if (storedCache.has("results")) {
                         jsonResponse = storedCache.getJSONArray("results");
                     }
                 }
@@ -250,6 +278,7 @@ public class RandomWallpaper extends IntentService {
                             mWallpaperManager.getDesiredMinimumHeight());
                     wBase.setResolutionFilter(ResFilter.GREATER_OR_EQUAL);
                     wBase.setSearchTerm(mPrefHelper.getSearchTerm());
+                    Log.d(TAG, "Fetching new wallpapers : " + wBase.getQueryString());
                     jsonResponse = wBase.query();
                     if (jsonResponse != null) {
                         storedCache = new JSONObject();
@@ -258,14 +287,11 @@ public class RandomWallpaper extends IntentService {
                         mPrefHelper.resetFailedAttempts();
                         index = 0;
                     }
-                    Log.d(TAG, "Fetching new wallpapers : " + wBase.getQueryString());
                 } else {
                     Log.d(TAG, "Using cache");
                 }
 
-                if (mForcedRefresh) {
-                    Util.setWidgetProgress(this, 15);
-                }
+                Util.setWidgetProgress(this, 15);
 
                 if (jsonResponse != null) {
                     JSONObject selectedImage = jsonResponse.getJSONObject(index);
@@ -275,9 +301,7 @@ public class RandomWallpaper extends IntentService {
                     mImageInfo.height = imageAttrs.getInt("wall_h");
                     mImageInfo.width = imageAttrs.getInt("wall_w");
 
-                    if (mForcedRefresh) {
-                        Util.setWidgetProgress(this, 20);
-                    }
+                    Util.setWidgetProgress(this, 20);
 
                     try {
                         setUrlWallpaper(new URL(selectedImage.getString("url")));
@@ -301,9 +325,7 @@ public class RandomWallpaper extends IntentService {
                     Util.showToast(this, getString(R.string.unable_retrieve_wallpaper));
 
                 }
-                if (mForcedRefresh) {
-                    Util.setWidgetProgress(this, 100);
-                }
+                Util.setWidgetProgress(this, 100);
             }
         } else {
             Log.d(TAG, "No network connection found");
@@ -313,7 +335,6 @@ public class RandomWallpaper extends IntentService {
         if (mForcedRefresh) {
             TimerUpdate.setTimer(this);
         }
-        mHasJobs = false;
     }
 
     private final static class ImageInfo {

@@ -78,6 +78,11 @@ class Util {
         PendingIntent pendingIntent = PendingIntent.getService(ctx,
                 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
         RemoteViews remoteViews = new RemoteViews(ctx.getPackageName(), R.layout.widget_layout);
+        if (progress == 100) {
+            remoteViews.setImageViewResource(R.id.refresh, R.drawable.navigation_refresh);
+        } else {
+            remoteViews.setImageViewResource(R.id.refresh, R.drawable.navigation_cancel);
+        }
         remoteViews.setOnClickPendingIntent(R.id.refresh, pendingIntent);
         // Set configuration intent
         intent = new Intent(ctx, Configuration.class);
@@ -105,6 +110,9 @@ class Util {
             byte buffer[] = new byte[1024];
             int bytesRead, currentLength = 0, barProgress, lastProgress = 0;
             while ((bytesRead = in.read(buffer)) != -1) {
+                if (Thread.interrupted()) {
+                    return false;
+                }
                 if (allocatedProgress != 0) {
                     currentLength += bytesRead;
                     barProgress = (int) (currentProgress + ((float) currentLength / totalLength) * allocatedProgress);
